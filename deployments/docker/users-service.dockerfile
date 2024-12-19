@@ -8,6 +8,7 @@ RUN go mod download
 COPY ../../cmd/users-service ./
 COPY ../../internal/users-service ./internal/users-service
 COPY ../../internal/shared ./internal/shared
+COPY ../../contracts ./contracts
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o server
 

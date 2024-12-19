@@ -13,12 +13,19 @@ import (
 )
 
 func main() {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
 	cfg, err := config.NewConfig[srvConfig.Config]()
 	if err != nil {
 		slog.Warn("failed to parse config", "err", err)
 	}
 
-	srv, err := server.NewServer(cfg)
+	srv, err := server.NewServer(ctx, cfg)
+	if err != nil {
+		slog.Warn("failed to create server", "err", err)
+		os.Exit(1)
+	}
 
 	go func() {
 		signalCh := make(chan os.Signal, 1)

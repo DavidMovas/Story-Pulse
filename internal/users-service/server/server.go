@@ -3,12 +3,22 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
 	"net"
+	"story-pulse/internal/shared/echox"
+	"story-pulse/internal/shared/validation"
 	"story-pulse/internal/users-service/config"
 	"story-pulse/internal/users-service/handlers"
+	"story-pulse/internal/users-service/repository"
+	"story-pulse/internal/users-service/service"
+	"time"
+)
+
+const (
+	dbConnectionTime = 10 * time.Second
 )
 
 type Server struct {
@@ -17,24 +27,52 @@ type Server struct {
 	cfg    *config.Config
 }
 
-func NewServer(cfg *config.Config) (*Server, error) {
+func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	logger, _ := zap.NewProduction()
 	defer func() {
 		_ = logger.Sync()
 	}()
 
+	fmt.Printf("HERE 1")
+
 	sugar := logger.Sugar()
+
+	validation.SetupValidators()
 
 	e := echo.New()
 
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
+
+	fmt.Printf("HERE 2")
+
+	e.HTTPErrorHandler = echox.ErrorHandler
 	e.HideBanner = true
 	e.HidePort = true
 
-	handler := handlers.NewHandler(sugar)
+	fmt.Printf("HERE 3")
 
-	api := e.Group("/users-service")
+	db, err := connectDB(ctx, cfg.DatabaseURL)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("HERE 4")
+
+	rep := repository.NewRepository(db)
+	srv := service.NewService(rep)
+	handler := handlers.NewHandler(srv, sugar)
+
+	fmt.Printf("HERE 5")
+
+	api := e.Group("/users")
+
 	api.GET("/health", handler.Health)
+
+	api.GET("/:userId", handler.GetUserByID)
+	api.POST("/", handler.CreateUser)
+
+	fmt.Printf("HERE 6")
 
 	return &Server{
 		e:      e,
@@ -66,4 +104,17 @@ func (s *Server) Port() (int, error) {
 	}
 
 	return addr.(*net.TCPAddr).Port, nil
+}
+
+func connectDB(ctx context.Context, connString string) (db *pgxpool.Pool, err error) {
+	db, err = pgxpool.New(ctx, connString)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
+	}
+
+	if err = db.Ping(ctx); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	return db, nil
 }
