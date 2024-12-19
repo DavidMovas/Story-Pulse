@@ -5,9 +5,9 @@ func (u *CreateUserRequest) ToUserWithPassword(passwordHash string) *UserWithPas
 		User: &User{
 			Email:     u.Email,
 			Username:  u.Username,
-			AvatarURL: &u.AvatarURL,
-			FullName:  &u.FullName,
-			Bio:       &u.Bio,
+			AvatarURL: u.AvatarURL,
+			FullName:  u.FullName,
+			Bio:       u.Bio,
 		},
 		PasswordHash: passwordHash,
 	}
