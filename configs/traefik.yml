@@ -6,7 +6,7 @@ providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
-    httpClientTimeout: 300
+    useBindPortIP: true
 
 api:
   dashboard: true
