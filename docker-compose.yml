@@ -76,8 +76,8 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.routers.users-service.entrypoints=web
-      - traefik.http.routers.users-service.rule=PathPrefix(`/users-service`)
-      - traefik.http.services.users-service.loadbalancer.healthcheck.path=/users-service/health
+      - traefik.http.routers.users-service.rule=PathPrefix(`/users`)
+      - traefik.http.services.users-service.loadbalancer.healthcheck.path=/users/health
       - traefik.http.services.users-service.loadbalancer.healthcheck.interval=10s
       - traefik.http.services.users-service.loadbalancer.healthcheck.timeout=3s
       - traefik.http.services.users-service.loadbalancer.server.port=${USERS_SERVICE_WEB_PORT}
