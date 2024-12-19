@@ -1,0 +1,22 @@
+version: "3"
+
+services:
+  content-service:
+    container_name: content-service
+    build:
+      context: .
+      dockerfile: deployments/docker/content-service.dockerfile
+    environment:
+      PORT: ${CONTENT_SERVICE_WEB_PORT}
+      GRPC_PORT: ${CONTENT_SERVICE_GRPC_PORT}
+      GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
+    ports:
+      - ${CONTENT_SERVICE_WEB_PORT}:${CONTENT_SERVICE_WEB_PORT}
+    deploy:
+      mode: replicated
+      replicas: 1
+    networks:
+      - default
+
+networks:
+  default:
