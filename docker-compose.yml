@@ -29,7 +29,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.routers.content-service.entrypoints=web
-      - traefik.http.routers.content-service.rule=Host(`localhost`)
+      - traefik.http.routers.content-service.rule=PathPrefix(`/content-service`)
       - traefik.http.services.content-service.loadbalancer.healthcheck.path=/health
       - traefik.http.services.content-service.loadbalancer.healthcheck.interval=10s
       - traefik.http.services.content-service.loadbalancer.healthcheck.timeout=3s
