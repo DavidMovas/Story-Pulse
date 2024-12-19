@@ -9,7 +9,6 @@ import (
 	"net"
 	"story-pulse/internal/content-service/config"
 	"story-pulse/internal/content-service/handlers"
-	"time"
 )
 
 type Server struct {
@@ -53,9 +52,7 @@ func (s *Server) Run() error {
 	return s.e.Start(fmt.Sprintf(":%d", port))
 }
 
-func (s *Server) Stop() error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.cfg.GracefulShutdownTimeout)*time.Second)
-	defer cancel()
+func (s *Server) Stop(ctx context.Context) error {
 	return s.e.Shutdown(ctx)
 }
 

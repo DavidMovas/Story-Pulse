@@ -37,6 +37,8 @@ services:
       GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
     expose:
       - ${CONTENT_SERVICE_WEB_PORT}
+    ports:
+      - ${CONTENT_SERVICE_WEB_PORT}:${CONTENT_SERVICE_WEB_PORT}
     networks:
       - traefik
       - default
