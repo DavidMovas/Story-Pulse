@@ -51,22 +51,3 @@ type CreateUserRequest struct {
 	FullName  string `json:"fullName"`
 	Bio       string `json:"bio"`
 }
-
-func (u *User) ToUserWithPassword() *UserWithPassword {
-	return &UserWithPassword{
-		User: u,
-	}
-}
-
-func (u *CreateUserRequest) ToUserWithPassword(passwordHash string) *UserWithPassword {
-	return &UserWithPassword{
-		User: &User{
-			Email:     u.Email,
-			Username:  u.Username,
-			AvatarURL: &u.AvatarURL,
-			FullName:  &u.FullName,
-			Bio:       &u.Bio,
-		},
-		PasswordHash: passwordHash,
-	}
-}

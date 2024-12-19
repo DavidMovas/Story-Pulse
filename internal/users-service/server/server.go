@@ -62,6 +62,7 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	api.GET("/health", handler.Health)
 
 	api.GET("/:userId", handler.GetUserByID)
+	api.POST("/", handler.CreateUser)
 
 	return &Server{
 		e:      e,
