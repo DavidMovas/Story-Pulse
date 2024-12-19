@@ -27,7 +27,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.routers.content-service.rule=PathPrefix(`/content-service`)
-      - traefik.http.services.content-service.loadbalancer.healthcheck.path=/health
+      - traefik.http.services.content-service.loadbalancer.healthcheck.path=/content-service/health
       - traefik.http.services.content-service.loadbalancer.healthcheck.interval=10s
       - traefik.http.services.content-service.loadbalancer.healthcheck.timeout=3s
       - traefik.http.services.content-service.loadbalancer.server.port=${CONTENT_SERVICE_WEB_PORT}
@@ -39,6 +39,56 @@ services:
       - ${CONTENT_SERVICE_WEB_PORT}
     ports:
       - ${CONTENT_SERVICE_WEB_PORT}:${CONTENT_SERVICE_WEB_PORT}
+    networks:
+      - traefik
+      - default
+
+  auth-service:
+    container_name: auth-service
+    build:
+      context: .
+      dockerfile: deployments/docker/auth-service.dockerfile
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.auth-service.entrypoints=web
+      - traefik.http.routers.auth-service.rule=PathPrefix(`/auth-service`)
+      - traefik.http.services.auth-service.loadbalancer.healthcheck.path=/auth-service/health
+      - traefik.http.services.auth-service.loadbalancer.healthcheck.interval=10s
+      - traefik.http.services.auth-service.loadbalancer.healthcheck.timeout=3s
+      - traefik.http.services.auth-service.loadbalancer.server.port=${AUTH_SERVICE_WEB_PORT}
+    environment:
+      PORT: ${AUTH_SERVICE_WEB_PORT}
+      GRPC_PORT: ${AUTH_SERVICE_GRPC_PORT}
+      GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
+    expose:
+      - ${AUTH_SERVICE_WEB_PORT}
+    ports:
+      - ${AUTH_SERVICE_WEB_PORT}:${AUTH_SERVICE_WEB_PORT}
+    networks:
+      - traefik
+      - default
+
+  users-service:
+    container_name: users-service
+    build:
+      context: .
+      dockerfile: deployments/docker/users-service.dockerfile
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.users-service.entrypoints=web
+      - traefik.http.routers.users-service.rule=PathPrefix(`/users-service`)
+      - traefik.http.services.users-service.loadbalancer.healthcheck.path=/users-service/health
+      - traefik.http.services.users-service.loadbalancer.healthcheck.interval=10s
+      - traefik.http.services.users-service.loadbalancer.healthcheck.timeout=3s
+      - traefik.http.services.users-service.loadbalancer.server.port=${USERS_SERVICE_WEB_PORT}
+    environment:
+      PORT: ${USERS_SERVICE_WEB_PORT}
+      GRPC_PORT: ${USERS_SERVICE_GRPC_PORT}
+      GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
+    expose:
+      - ${USERS_SERVICE_WEB_PORT}
+    ports:
+      - ${USERS_SERVICE_WEB_PORT}:${USERS_SERVICE_WEB_PORT}
     networks:
       - traefik
       - default

@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	srvConfig "story-pulse/internal/auth-service/config"
-	"story-pulse/internal/auth-service/server"
 	"story-pulse/internal/shared/config"
+	srvConfig "story-pulse/internal/users-service/config"
+	"story-pulse/internal/users-service/server"
 	"syscall"
 	"time"
 )
