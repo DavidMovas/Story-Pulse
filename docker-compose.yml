@@ -2,20 +2,19 @@ version: "3"
 
 services:
 
-  traefik:
-    container_name: traefik
-    image: traefik:v3.2.3
+  kong:
+    container_name: kong
+    image: kong:3.8.0
     ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
+      - "8000:8000" # Proxy
+      - "8001:8001" # Admin API
+      - "8443:8443" # Proxy (SSL)
+      - "8444:8444" # Admin API (SSL)
+    environment:
+      KONG_DATABASE: "off" # DB-less mode
+      KONG_DECLARATIVE_CONFIG: "/kong/kong.yml"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./configs/traefik.yml:/etc/traefik/traefik.yml
-    networks:
-      - traefik
-    depends_on:
-      - content-service
+        - ./configs/kong.yml:/kong/kong.yml
 
 
   content-service:
@@ -23,14 +22,6 @@ services:
     build:
       context: .
       dockerfile: deployments/docker/content-service.dockerfile
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.content-service.entrypoints=web
-      - traefik.http.routers.content-service.rule=PathPrefix(`/content-service`)
-      - traefik.http.services.content-service.loadbalancer.healthcheck.path=/health
-      - traefik.http.services.content-service.loadbalancer.healthcheck.interval=10s
-      - traefik.http.services.content-service.loadbalancer.healthcheck.timeout=3s
-      - traefik.http.services.content-service.loadbalancer.server.port=8010
     environment:
       PORT: ${CONTENT_SERVICE_WEB_PORT}
       GRPC_PORT: ${CONTENT_SERVICE_GRPC_PORT}
@@ -40,9 +31,9 @@ services:
     ports:
       - ${CONTENT_SERVICE_WEB_PORT}:${CONTENT_SERVICE_WEB_PORT}
     networks:
-      - traefik
+      - kong
       - default
 
 networks:
-  traefik:
+  kong:
   default:

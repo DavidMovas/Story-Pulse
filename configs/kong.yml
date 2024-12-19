@@ -1,0 +1,29 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: content-service
+    host: content-service
+    port: 8010
+    routes:
+      - name: test
+        paths:
+          - /health
+          - /content-service/test
+
+upstreams:
+  - name: content-service
+    targets:
+      - target: "content-service:8010"
+    healthchecks:
+      active:
+        type: http
+        http_path: /health
+        healthy:
+          http_statuses: [ 200, 302 ]
+          interval: 10
+          successes: 2
+        unhealthy:
+          http_statuses: [ 500, 404 ]
+          interval: 10
+          http_failures: 3

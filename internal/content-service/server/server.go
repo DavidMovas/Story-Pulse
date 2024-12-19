@@ -29,7 +29,6 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	e := echo.New()
 
 	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
 	e.HideBanner = true
 	e.HidePort = true
 
