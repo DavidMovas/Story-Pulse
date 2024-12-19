@@ -11,7 +11,7 @@ type User struct {
 	Bio         *string    `json:"bio,omitempty"`
 	LastLoginAt *time.Time `json:"lastLoginAt,omitempty"`
 	Role        string     `json:"role"`
-	IsVerified  bool       `json:"isVerified"`
+	IsVerified  *bool      `json:"isVerified,omitempty"`
 	CreatedAt   time.Time  `json:"createdAt"`
 	DeletedAt   *time.Time `json:"deletedAt,omitempty"`
 }
@@ -44,10 +44,10 @@ type GetUserByIDRequest struct {
 }
 
 type CreateUserRequest struct {
-	Email     string `json:"email" validate:"email"`
-	Password  string `json:"password" validate:"password"`
-	Username  string `json:"username" validate:"username"`
-	AvatarURL string `json:"avatarUrl"`
-	FullName  string `json:"fullName"`
-	Bio       string `json:"bio"`
+	Email     string  `json:"email" validate:"email"`
+	Password  string  `json:"password" validate:"password"`
+	Username  string  `json:"username" validate:"username"`
+	AvatarURL *string `json:"avatarUrl"`
+	FullName  *string `json:"fullName"`
+	Bio       *string `json:"bio"`
 }

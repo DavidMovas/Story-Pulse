@@ -18,23 +18,23 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 }
 
 func (r *Repository) GetUserByID(ctx context.Context, userId int) (*User, error) {
-	builder := dbx.NewStatementBuilder()
-	builder.Select(
-		"id",
-		"email",
-		"avatar_url",
-		"username",
-		"full_name",
-		"bio",
-		"last_login_at",
-		"role",
-		"created_at",
-	).
+	builder := dbx.StatementBuilder.
+		Select(
+			"id",
+			"email",
+			"avatar_url",
+			"username",
+			"full_name",
+			"bio",
+			"last_login_at",
+			"role",
+			"created_at",
+		).
 		From("users").
 		Where(squirrel.Eq{"id": userId}).
 		Where(squirrel.Eq{"deleted_at": nil})
 
-	query, args, err := builder.Build()
+	query, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err
 	}
@@ -67,14 +67,23 @@ func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*User, e
 }
 
 func (r *Repository) CreateUser(ctx context.Context, user *UserWithPassword) (*User, error) {
-	builder := dbx.NewStatementBuilder()
-
-	builder.Insert("users").
-		Columns("email", "password_hash", "avatar_url", "username", "full_name", "bio").
-		Values(user.Email, user.PasswordHash, user.AvatarURL, user.Username, user.FullName, user.Bio).
+	builder := dbx.StatementBuilder.
+		Insert("users").
+		Columns("email", "pass_hash", "username").
+		Values(user.Email, user.PasswordHash, user.Username).
 		Suffix("RETURNING id, role, created_at")
 
-	query, args, err := builder.Build()
+	if user.AvatarURL != nil {
+		builder.Columns("avatar_url").Values(*user.AvatarURL)
+	}
+	if user.FullName != nil {
+		builder.Columns("full_name").Values(*user.FullName)
+	}
+	if user.Bio != nil {
+		builder.Columns("bio").Values(*user.Bio)
+	}
+
+	query, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err
 	}
