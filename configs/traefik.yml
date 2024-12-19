@@ -7,7 +7,6 @@ providers:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
     httpClientTimeout: 300
-    watch: true
 
 api:
   dashboard: true

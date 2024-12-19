@@ -1,9 +1,10 @@
 version: "3"
 
 services:
+
   traefik:
     container_name: traefik
-    image: traefik:3.2
+    image: traefik:v3.2.3
     command:
       - "--log.level=DEBUG"
       - "--configFile=/etc/traefik/traefik.yml"
@@ -16,21 +17,23 @@ services:
       - ./configs/traefik.yml:/etc/traefik/traefik.yml
     networks:
       - traefik
+    depends_on:
+      - content-service
 
 
   content-service:
     container_name: content-service
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.content-service.entrypoints=web"
-      - "traefik.http.routers.content-service.rule=PathPrefix(`/content-service`)"
-      - "traefik.http.services.content-service.loadbalancer.healthcheck.path=/content-service/health"
-      - "traefik.http.services.content-service.loadbalancer.healthcheck.interval=10s"
-      - "traefik.http.services.content-service.loadbalancer.healthcheck.timeout=3s"
-      - "traefik.http.services.content-service.loadbalancer.server.port=8010"
     build:
       context: .
       dockerfile: deployments/docker/content-service.dockerfile
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.content-service.entrypoints=web
+      - traefik.http.routers.content-service.rule=PathPrefix(`/content-service`)
+      - traefik.http.services.content-service.loadbalancer.healthcheck.path=/content-service/health
+      - traefik.http.services.content-service.loadbalancer.healthcheck.interval=10s
+      - traefik.http.services.content-service.loadbalancer.healthcheck.timeout=3s
+      - traefik.http.services.content-service.loadbalancer.server.port=8010
     environment:
       PORT: ${CONTENT_SERVICE_WEB_PORT}
       GRPC_PORT: ${CONTENT_SERVICE_GRPC_PORT}
@@ -39,14 +42,9 @@ services:
       - ${CONTENT_SERVICE_WEB_PORT}
     ports:
       - ${CONTENT_SERVICE_WEB_PORT}:${CONTENT_SERVICE_WEB_PORT}
-    deploy:
-      mode: replicated
-      replicas: 1
     networks:
       - traefik
       - default
-    depends_on:
-      - traefik
 
 networks:
   traefik:
