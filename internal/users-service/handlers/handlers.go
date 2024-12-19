@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"story-pulse/internal/shared/echox"
 	apperrors "story-pulse/internal/shared/error"
-	"story-pulse/internal/users-service/models"
+	. "story-pulse/internal/users-service/models"
 	. "story-pulse/internal/users-service/service"
 )
 
@@ -28,12 +28,27 @@ func (h *Handler) Health(c echo.Context) error {
 
 func (h *Handler) GetUserByID(c echo.Context) error {
 	ctx := c.Request().Context()
-	req, err := echox.BindAndValidate[models.GetUserByIDRequest](c)
+	req, err := echox.BindAndValidate[GetUserByIDRequest](c)
 	if err != nil {
 		return apperrors.BadRequest(err)
 	}
 
 	user, err := h.service.GetUserByID(ctx, req.ID)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, user)
+}
+
+func (h *Handler) CreateUser(c echo.Context) error {
+	ctx := c.Request().Context()
+	req, err := echox.BindAndValidate[CreateUserRequest](c)
+	if err != nil {
+		return apperrors.BadRequest(err)
+	}
+
+	user, err := h.service.CreateUser(ctx, req)
 	if err != nil {
 		return err
 	}

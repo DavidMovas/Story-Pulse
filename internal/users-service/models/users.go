@@ -8,7 +8,7 @@ type User struct {
 	AvatarURL   *string    `json:"avatarUrl,omitempty"`
 	Username    string     `json:"username"`
 	FullName    *string    `json:"fullName,omitempty"`
-	Bio         string     `json:"bio"`
+	Bio         *string    `json:"bio,omitempty"`
 	LastLoginAt *time.Time `json:"lastLoginAt,omitempty"`
 	Role        string     `json:"role"`
 	IsVerified  bool       `json:"isVerified"`
@@ -41,4 +41,32 @@ type UserDetails struct {
 
 type GetUserByIDRequest struct {
 	ID int `json:"-" param:"userId" validate:"required"`
+}
+
+type CreateUserRequest struct {
+	Email     string `json:"email" validate:"email"`
+	Password  string `json:"password" validate:"password"`
+	Username  string `json:"username" validate:"username"`
+	AvatarURL string `json:"avatarUrl"`
+	FullName  string `json:"fullName"`
+	Bio       string `json:"bio"`
+}
+
+func (u *User) ToUserWithPassword() *UserWithPassword {
+	return &UserWithPassword{
+		User: u,
+	}
+}
+
+func (u *CreateUserRequest) ToUserWithPassword(passwordHash string) *UserWithPassword {
+	return &UserWithPassword{
+		User: &User{
+			Email:     u.Email,
+			Username:  u.Username,
+			AvatarURL: &u.AvatarURL,
+			FullName:  &u.FullName,
+			Bio:       &u.Bio,
+		},
+		PasswordHash: passwordHash,
+	}
 }
