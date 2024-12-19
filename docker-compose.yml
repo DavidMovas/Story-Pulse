@@ -68,6 +68,31 @@ services:
       - traefik
       - default
 
+  users-service:
+    container_name: users-service
+    build:
+      context: .
+      dockerfile: deployments/docker/users-service.dockerfile
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.users-service.entrypoints=web
+      - traefik.http.routers.users-service.rule=PathPrefix(`/users-service`)
+      - traefik.http.services.users-service.loadbalancer.healthcheck.path=/users-service/health
+      - traefik.http.services.users-service.loadbalancer.healthcheck.interval=10s
+      - traefik.http.services.users-service.loadbalancer.healthcheck.timeout=3s
+      - traefik.http.services.users-service.loadbalancer.server.port=${USERS_SERVICE_WEB_PORT}
+    environment:
+      PORT: ${USERS_SERVICE_WEB_PORT}
+      GRPC_PORT: ${USERS_SERVICE_GRPC_PORT}
+      GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
+    expose:
+      - ${USERS_SERVICE_WEB_PORT}
+    ports:
+      - ${USERS_SERVICE_WEB_PORT}:${USERS_SERVICE_WEB_PORT}
+    networks:
+      - traefik
+      - default
+
 networks:
   traefik:
   default:
