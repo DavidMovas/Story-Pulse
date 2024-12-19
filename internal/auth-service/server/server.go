@@ -7,8 +7,8 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
 	"net"
-	"story-pulse/internal/content-service/config"
-	"story-pulse/internal/content-service/handlers"
+	"story-pulse/internal/auth-service/config"
+	"story-pulse/internal/auth-service/handlers"
 )
 
 type Server struct {
@@ -33,7 +33,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 
 	handler := handlers.NewHandler(sugar)
 
-	api := e.Group("/content-service")
+	api := e.Group("/auth-service")
 	api.GET("/health", handler.Health)
 
 	return &Server{
