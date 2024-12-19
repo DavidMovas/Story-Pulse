@@ -33,10 +33,11 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	e.HideBanner = true
 	e.HidePort = true
 
-	handler := handlers.NewHandler()
+	handler := handlers.NewHandler(sugar)
 
 	api := e.Group("/content-service")
 
+	api.GET("/health", handler.Health)
 	api.GET("/test", handler.Test)
 
 	return &Server{
