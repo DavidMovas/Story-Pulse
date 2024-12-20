@@ -33,8 +33,6 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 		_ = logger.Sync()
 	}()
 
-	fmt.Printf("HERE 1")
-
 	sugar := logger.Sugar()
 
 	validation.SetupValidators()
@@ -44,35 +42,25 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 
-	fmt.Printf("HERE 2")
-
 	e.HTTPErrorHandler = echox.ErrorHandler
 	e.HideBanner = true
 	e.HidePort = true
-
-	fmt.Printf("HERE 3")
 
 	db, err := connectDB(ctx, cfg.DatabaseURL)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Printf("HERE 4")
-
 	rep := repository.NewRepository(db)
 	srv := service.NewService(rep)
 	handler := handlers.NewHandler(srv, sugar)
-
-	fmt.Printf("HERE 5")
 
 	api := e.Group("/users")
 
 	api.GET("/health", handler.Health)
 
 	api.GET("/:userId", handler.GetUserByID)
-	api.POST("/", handler.CreateUser)
-
-	fmt.Printf("HERE 6")
+	api.POST("", handler.CreateUser)
 
 	return &Server{
 		e:      e,

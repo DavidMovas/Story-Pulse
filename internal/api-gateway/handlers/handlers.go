@@ -53,6 +53,7 @@ func (h *Handler) Gateway(c echo.Context) error {
 	case h.cfg.SearchService.ServicePath:
 		serviceUrl = h.cfg.SearchService.ServiceURL
 	default:
+		h.logger.Infof("FROM PATH: %v\n", servicePath)
 		return apperrors.BadRequest(fmt.Errorf("invalid path"))
 	}
 
