@@ -14,11 +14,6 @@ import (
 	"story-pulse/internal/users-service/handlers"
 	"story-pulse/internal/users-service/repository"
 	"story-pulse/internal/users-service/service"
-	"time"
-)
-
-const (
-	dbConnectionTime = 10 * time.Second
 )
 
 type Server struct {
