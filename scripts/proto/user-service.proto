@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package userservice.v1;
+
+option go_package = "./grpc";
+
+import "google/protobuf/timestamp.proto";
+
+service UsersServiceV1 {
+  rpc GetUserByID(GetUserByIDRequest) returns (GetUserByIDResponse);
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+}
+
+message User {
+  int64 id = 1;
+  string email = 2;
+  string avatar_url = 3;
+  string username = 4;
+  string full_name = 5;
+  string bio = 6;
+  google.protobuf.Timestamp last_login_at = 7;
+  string role = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+message GetUserByIDRequest {
+  int64 id = 1;
+}
+
+message GetUserByIDResponse {
+  User user = 1;
+}
+
+message CreateUserRequest {
+  string email = 1;
+  string password = 2;
+  string username = 3;
+  string avatar_url = 4;
+  string full_name = 5;
+  string bio = 6;
+}
+
+message CreateUserResponse {
+  User user = 1;
+}
