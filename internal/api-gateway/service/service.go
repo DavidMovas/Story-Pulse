@@ -12,14 +12,19 @@ func NewService() *Service {
 	return &Service{}
 }
 
-func (u *Service) Handle(serviceUrl, method, path, query string, body io.Reader) (*http.Response, error) {
+func (u *Service) Handle(serviceUrl, method, path, query string, header http.Header, body io.ReadCloser) (*http.Response, error) {
 	client := http.Client{}
 	requestURL := fmt.Sprintf("%s/%s", serviceUrl, path)
 	if query != "" {
 		requestURL += "?" + query
 	}
 
+	defer func() {
+		_ = body.Close()
+	}()
+
 	request, err := http.NewRequest(method, requestURL, body)
+	request.Header = header
 	if err != nil {
 		return nil, err
 	}
@@ -28,10 +33,6 @@ func (u *Service) Handle(serviceUrl, method, path, query string, body io.Reader)
 	if err != nil {
 		return nil, err
 	}
-
-	defer func() {
-		_ = response.Body.Close()
-	}()
 
 	return response, nil
 }

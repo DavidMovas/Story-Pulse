@@ -9,6 +9,7 @@ import (
 	"net"
 	"story-pulse/internal/api-gateway/config"
 	"story-pulse/internal/api-gateway/handlers"
+	"story-pulse/internal/api-gateway/middlewares"
 	"story-pulse/internal/api-gateway/service"
 )
 
@@ -29,6 +30,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	e := echo.New()
 
 	e.Use(middleware.Recover())
+	e.Use(middlewares.NewLoggerMiddleware(logger.WithOptions(zap.WithCaller(false)).Sugar()))
 	e.HideBanner = true
 	e.HidePort = true
 
@@ -39,7 +41,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	gateway.GET("/health", handler.Health)
 
 	api := e.Group("/api")
-	api.Any("/", handler.Gateway)
+	api.Use(middlewares.NewGatewayMiddleware(handler.Gateway))
 
 	return &Server{
 		e:      e,

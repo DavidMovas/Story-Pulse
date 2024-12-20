@@ -5,8 +5,8 @@ services:
   api-gateway:
     container_name: api-gateway
     build:
-      context: ..
-      dockerfile: docker/api-gateway.dockerfile
+      context: .
+      dockerfile: ./deployments/docker/api-gateway.dockerfile
     environment:
       PORT: ${API_GATEWAY_PORT}
       GRPC_PORT: ${API_GATEWAY_GRPC_PORT}
@@ -23,8 +23,8 @@ services:
   auth-service:
     container_name: auth-service
     build:
-      context: ..
-      dockerfile: docker/auth-service.dockerfile
+      context: .
+      dockerfile: ./deployments/docker/auth-service.dockerfile
     environment:
       PORT: ${AUTH_SERVICE_WEB_PORT}
       GRPC_PORT: ${AUTH_SERVICE_GRPC_PORT}
@@ -40,8 +40,8 @@ services:
   users-service:
     container_name: users-service
     build:
-      context: ..
-      dockerfile: docker/users-service.dockerfile
+      context: .
+      dockerfile: ./deployments/docker/users-service.dockerfile
     environment:
       PORT: ${USERS_SERVICE_WEB_PORT}
       GRPC_PORT: ${USERS_SERVICE_GRPC_PORT}
@@ -77,8 +77,8 @@ services:
 
   users_migrator:
     build:
-      context: ..
-      dockerfile: docker/tern/users-tern-migrator.dockerfile
+      context: .
+      dockerfile: ./deployments/docker/tern/users-tern-migrator.dockerfile
     command:
       - migrate
       - --conn-string

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+	"io"
 	"net/http"
 	"net/url"
 	"story-pulse/internal/api-gateway/config"
@@ -31,26 +32,16 @@ func (h *Handler) Health(c echo.Context) error {
 }
 
 func (h *Handler) Gateway(c echo.Context) error {
-	requestUrl := c.Request().URL.RequestURI()
-	parsedUrl, err := url.Parse(requestUrl)
+	parsedUrl, err := url.Parse(c.Request().URL.RequestURI())
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, apperrors.BadRequest(err))
 	}
 
-	method := c.Request().Method
-	path := strings.TrimPrefix(parsedUrl.Path, "/")
-	query := parsedUrl.RawQuery
-	body := c.Request().Body
-	defer func() {
-		_ = body.Close()
-	}()
-
-	fmt.Printf("FULL REQUEST URL: %s\n\n", requestUrl)
-	fmt.Printf("PATH: %s\n", path)
-	fmt.Printf("QUERY: %s\n", query)
+	trimmed := strings.TrimPrefix(parsedUrl.String(), "/api/")
+	servicePath := strings.SplitN(trimmed, "/", 2)[0]
 
 	var serviceUrl string
-	switch path {
+	switch servicePath {
 	case h.cfg.UsersService.ServicePath:
 		serviceUrl = h.cfg.UsersService.ServiceURL
 	case h.cfg.AuthService.ServicePath:
@@ -62,13 +53,25 @@ func (h *Handler) Gateway(c echo.Context) error {
 	case h.cfg.SearchService.ServicePath:
 		serviceUrl = h.cfg.SearchService.ServiceURL
 	default:
-		return c.JSON(http.StatusBadRequest, apperrors.BadRequest(fmt.Errorf("invalid path")))
+		return apperrors.BadRequest(fmt.Errorf("invalid path"))
 	}
 
-	res, err := h.service.Handle(serviceUrl, method, path, query, body)
+	res, err := h.service.Handle(serviceUrl, c.Request().Method, trimmed, parsedUrl.RawQuery, c.Request().Header, c.Request().Body)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err)
 	}
 
-	return c.JSON(res.StatusCode, res.Body)
+	defer func() {
+		_ = res.Body.Close()
+	}()
+
+	for key, values := range res.Header {
+		for _, value := range values {
+			c.Response().Header().Add(key, value)
+		}
+	}
+
+	c.Response().WriteHeader(res.StatusCode)
+	_, err = io.Copy(c.Response().Writer, res.Body)
+	return err
 }
