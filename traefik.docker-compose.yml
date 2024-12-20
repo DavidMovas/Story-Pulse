@@ -18,12 +18,11 @@ services:
     depends_on:
       - content-service
 
-
   content-service:
     container_name: content-service
     build:
       context: .
-      dockerfile: deployments/docker/content-service.dockerfile
+      dockerfile: ./deployments/docker/content-service.dockerfile
     labels:
       - traefik.enable=true
       - traefik.http.routers.content-service.rule=PathPrefix(`/content-service`)
@@ -47,7 +46,7 @@ services:
     container_name: auth-service
     build:
       context: .
-      dockerfile: deployments/docker/auth-service.dockerfile
+      dockerfile: ./deployments/docker/auth-service.dockerfile
     labels:
       - traefik.enable=true
       - traefik.http.routers.auth-service.entrypoints=web
@@ -72,7 +71,7 @@ services:
     container_name: users-service
     build:
       context: .
-      dockerfile: deployments/docker/users-service.dockerfile
+      dockerfile: ./deployments/docker/users-service.dockerfile
     labels:
       - traefik.enable=true
       - traefik.http.routers.users-service.entrypoints=web
@@ -117,7 +116,7 @@ services:
   users_migrator:
     build:
       context: .
-      dockerfile: deployments/docker/tern/users-tern-migrator.dockerfile
+      dockerfile: ./deployments/docker/tern/users-tern-migrator.dockerfile
     command:
       - migrate
       - --conn-string

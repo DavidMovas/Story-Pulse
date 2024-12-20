@@ -1,0 +1,97 @@
+version: "3"
+
+services:
+
+  api-gateway:
+    container_name: api-gateway
+    build:
+      context: .
+      dockerfile: ./deployments/docker/api-gateway.dockerfile
+    environment:
+      PORT: ${API_GATEWAY_PORT}
+      GRPC_PORT: ${API_GATEWAY_GRPC_PORT}
+      GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
+      USERS_SERVICE_URL: http://users-service:${USERS_SERVICE_WEB_PORT}
+      USERS_SERVICE_PATH: users
+    ports:
+      - ${API_GATEWAY_PORT}:${API_GATEWAY_PORT}
+    networks:
+      - gateway
+
+
+
+  auth-service:
+    container_name: auth-service
+    build:
+      context: .
+      dockerfile: ./deployments/docker/auth-service.dockerfile
+    environment:
+      PORT: ${AUTH_SERVICE_WEB_PORT}
+      GRPC_PORT: ${AUTH_SERVICE_GRPC_PORT}
+      GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
+    expose:
+      - ${AUTH_SERVICE_WEB_PORT}
+    ports:
+      - ${AUTH_SERVICE_WEB_PORT}:${AUTH_SERVICE_WEB_PORT}
+    networks:
+      - gateway
+      - default
+
+  users-service:
+    container_name: users-service
+    build:
+      context: .
+      dockerfile: ./deployments/docker/users-service.dockerfile
+    environment:
+      PORT: ${USERS_SERVICE_WEB_PORT}
+      GRPC_PORT: ${USERS_SERVICE_GRPC_PORT}
+      GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
+      DATABASE_URL: postgres://${USERS_DB_USERNAME}:${USERS_DB_PASSWORD}@users_postgres:5432/${USERS_DB_NAME}
+    expose:
+      - ${USERS_SERVICE_WEB_PORT}
+    ports:
+      - ${USERS_SERVICE_WEB_PORT}:${USERS_SERVICE_WEB_PORT}
+    networks:
+      - gateway
+      - default
+    depends_on:
+      users_postgres:
+        condition: service_healthy
+
+  users_postgres:
+    container_name: users_postgres
+    image: postgres:17.2-alpine
+    environment:
+      POSTGRES_USER: ${USERS_DB_USERNAME}
+      POSTGRES_PASSWORD: ${USERS_DB_PASSWORD}
+      POSTGRES_DB: ${USERS_DB_NAME}
+    restart: on-failure
+    ports:
+      - ${USERS_DB_PORT}:5432
+    volumes:
+      - users_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready --dbname ${USERS_DB_NAME} --username ${USERS_DB_USERNAME}" ]
+      interval: 1s
+      timeout: 5s
+
+  users_migrator:
+    build:
+      context: .
+      dockerfile: ./deployments/docker/tern/users-tern-migrator.dockerfile
+    command:
+      - migrate
+      - --conn-string
+      - postgres://${USERS_DB_USERNAME}:${USERS_DB_PASSWORD}@users_postgres:5432/${USERS_DB_NAME}
+      - --migrations
+      - /migrations
+    depends_on:
+      users_postgres:
+        condition: service_healthy
+
+networks:
+  gateway:
+  default:
+
+volumes:
+  users_db_data:
