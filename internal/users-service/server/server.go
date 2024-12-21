@@ -65,7 +65,7 @@ func (s *Server) Run() (err error) {
 
 	s.closers = append(s.closers, s.listener.Close)
 
-	return nil
+	return s.grpcServer.Serve(s.listener)
 }
 
 func (s *Server) Stop(ctx context.Context) error {

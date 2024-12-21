@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -9,7 +8,6 @@ import (
 	"story-pulse/internal/api-gateway/server"
 	"story-pulse/internal/shared/config"
 	"syscall"
-	"time"
 )
 
 func main() {
@@ -19,6 +17,10 @@ func main() {
 	}
 
 	srv, err := server.NewServer(cfg)
+	if err != nil {
+		slog.Error("failed to create server", "err", err)
+		os.Exit(1)
+	}
 
 	go func() {
 		signalCh := make(chan os.Signal, 1)
@@ -28,14 +30,7 @@ func main() {
 		<-signalCh
 		slog.Info("Shutting down server...")
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.GracefulShutdownTimeout)*time.Second)
-		defer cancel()
-
-		if err = srv.Stop(ctx); err != nil {
-			slog.Warn("Error stopping server: %v", err)
-		} else {
-			slog.Info("Server gracefully stopped")
-		}
+		srv.Stop()
 	}()
 
 	if err = srv.Run(); err != nil {

@@ -2,51 +2,62 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	gwruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
-	"net"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"net/http"
 	"story-pulse/internal/api-gateway/config"
-	"story-pulse/internal/api-gateway/handlers"
 	"story-pulse/internal/api-gateway/middlewares"
-	"story-pulse/internal/api-gateway/service"
+	grpcServices "story-pulse/internal/shared/grpc/v1"
 )
 
 type Server struct {
-	e      *echo.Echo
+	mx     *gwruntime.ServeMux
 	logger *zap.SugaredLogger
 	cfg    *config.Config
+
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 func NewServer(cfg *config.Config) (*Server, error) {
+	serverCtx, cancel := context.WithCancel(context.Background())
 	logger, _ := zap.NewProduction()
 	defer func() {
 		_ = logger.Sync()
 	}()
 
-	sugar := logger.Sugar()
+	sugar := logger.Sugar().WithOptions(zap.WithCaller(false))
 
-	e := echo.New()
+	mx := gwruntime.NewServeMux(
+		gwruntime.WithMiddlewares(middlewares.NewLoggerMiddleware(sugar)),
+	)
 
-	e.Use(middleware.Recover())
-	e.Use(middlewares.NewLoggerMiddleware(logger.WithOptions(zap.WithCaller(false)).Sugar()))
-	e.HideBanner = true
-	e.HidePort = true
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, ""))}
 
-	srv := service.NewService()
-	handler := handlers.NewHandler(srv, cfg, sugar)
+	var errorsArray []error
+	for _, serviceUrl := range []string{cfg.UsersService.ServiceURL, cfg.AuthService.ServiceURL} {
+		err := grpcServices.RegisterUsersServiceHandlerFromEndpoint(serverCtx, mx, serviceUrl, opts)
+		sugar.Infow("connecting to grpc service", "service_url", serviceUrl)
+		if err != nil {
+			errorsArray = append(errorsArray, err)
+		}
+	}
 
-	gateway := e.Group("/gateway")
-	gateway.GET("/health", handler.Health)
-
-	api := e.Group("/api")
-	api.Use(middlewares.NewGatewayMiddleware(handler.Gateway))
+	if len(errorsArray) > 0 {
+		cancel()
+		return nil, errors.Join()
+	}
 
 	return &Server{
-		e:      e,
+		mx:     mx,
+		ctx:    serverCtx,
 		logger: sugar,
 		cfg:    cfg,
+		cancel: cancel,
 	}, nil
 }
 
@@ -54,23 +65,7 @@ func (s *Server) Run() error {
 	port := s.cfg.WebPort
 	s.logger.Infof("starting server on port %d", port)
 
-	return s.e.Start(fmt.Sprintf(":%d", port))
+	return http.ListenAndServe(fmt.Sprintf(":%d", port), s.mx)
 }
 
-func (s *Server) Stop(ctx context.Context) error {
-	return s.e.Shutdown(ctx)
-}
-
-func (s *Server) Port() (int, error) {
-	listener := s.e.Listener
-	if listener == nil {
-		return 0, fmt.Errorf("no listener configured")
-	}
-
-	addr := listener.Addr()
-	if addr == nil {
-		return 0, fmt.Errorf("no listener address")
-	}
-
-	return addr.(*net.TCPAddr).Port, nil
-}
+func (s *Server) Stop() { s.cancel() }
