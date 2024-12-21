@@ -3,50 +3,68 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	gwruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
-	"net"
+	"net/http"
 	"story-pulse/internal/api-gateway/config"
+	"story-pulse/internal/api-gateway/gateway"
 	"story-pulse/internal/api-gateway/handlers"
 	"story-pulse/internal/api-gateway/middlewares"
-	"story-pulse/internal/api-gateway/service"
+	"story-pulse/internal/api-gateway/options"
+	grpcServices "story-pulse/internal/shared/grpc/v1"
 )
 
 type Server struct {
-	e      *echo.Echo
-	logger *zap.SugaredLogger
-	cfg    *config.Config
+	gateway *gateway.Gateway
+	mux     *http.ServeMux
+	logger  *zap.SugaredLogger
+	cfg     *config.Config
+
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 func NewServer(cfg *config.Config) (*Server, error) {
+	serverCtx, cancel := context.WithCancel(context.Background())
 	logger, _ := zap.NewProduction()
 	defer func() {
 		_ = logger.Sync()
 	}()
 
-	sugar := logger.Sugar()
+	sugar := logger.Sugar().WithOptions(zap.WithCaller(false))
 
-	e := echo.New()
+	mux := http.NewServeMux()
 
-	e.Use(middleware.Recover())
-	e.Use(middlewares.NewLoggerMiddleware(logger.WithOptions(zap.WithCaller(false)).Sugar()))
-	e.HideBanner = true
-	e.HidePort = true
+	handler := handlers.NewHandler(sugar)
+	mux.HandleFunc("/health", handler.Health)
 
-	srv := service.NewService()
-	handler := handlers.NewHandler(srv, cfg, sugar)
+	muxOpts := []gwruntime.ServeMuxOption{
+		gwruntime.WithErrorHandler(options.CustomErrorHandler),
+		gwruntime.WithMiddlewares(middlewares.NewLoggerMiddleware(sugar)),
+	}
 
-	gateway := e.Group("/gateway")
-	gateway.GET("/health", handler.Health)
+	serviceOpts := []*gateway.ServiceOption{
+		{
+			Url:          cfg.UsersService.ServiceURL,
+			RegisterFunc: grpcServices.RegisterUsersServiceHandler,
+		},
+	}
 
-	api := e.Group("/api")
-	api.Use(middlewares.NewGatewayMiddleware(handler.Gateway))
+	gt, err := gateway.NewGateway(serverCtx, sugar, muxOpts, serviceOpts...)
+	if err != nil {
+		cancel()
+		return nil, err
+	}
+
+	mux.Handle("/", gt.Proxy())
 
 	return &Server{
-		e:      e,
-		logger: sugar,
-		cfg:    cfg,
+		gateway: gt,
+		mux:     mux,
+		ctx:     serverCtx,
+		logger:  sugar,
+		cfg:     cfg,
+		cancel:  cancel,
 	}, nil
 }
 
@@ -54,23 +72,10 @@ func (s *Server) Run() error {
 	port := s.cfg.WebPort
 	s.logger.Infof("starting server on port %d", port)
 
-	return s.e.Start(fmt.Sprintf(":%d", port))
+	return http.ListenAndServe(fmt.Sprintf(":%d", port), s.mux)
 }
 
-func (s *Server) Stop(ctx context.Context) error {
-	return s.e.Shutdown(ctx)
-}
-
-func (s *Server) Port() (int, error) {
-	listener := s.e.Listener
-	if listener == nil {
-		return 0, fmt.Errorf("no listener configured")
-	}
-
-	addr := listener.Addr()
-	if addr == nil {
-		return 0, fmt.Errorf("no listener address")
-	}
-
-	return addr.(*net.TCPAddr).Port, nil
+func (s *Server) Stop() error {
+	s.cancel()
+	return s.gateway.Close()
 }

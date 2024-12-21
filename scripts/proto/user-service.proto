@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package userservice.v1;
+
+option go_package = "./grpc/v1";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+service UsersService {
+  rpc GetUserByID(GetUserByIDRequest) returns (GetUserByIDResponse) {
+    option (google.api.http) = {
+      get: "/users/v1/{id}"
+    };
+  }
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
+    option (google.api.http) = {
+      post: "/users/v1"
+      body: "*"
+    };
+  }
+}
+
+message User {
+  int64 id = 1;
+  string email = 2;
+  optional string avatar_url = 3;
+  string username = 4;
+  optional string full_name = 5;
+  optional string bio = 6;
+  optional google.protobuf.Timestamp last_login_at = 7;
+  string role = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+message GetUserByIDRequest {
+  int64 id = 1;
+}
+
+message GetUserByIDResponse {
+  User user = 1;
+}
+
+message CreateUserRequest {
+  string email = 1;
+  string password = 2;
+  string username = 3;
+  optional string avatar_url = 4;
+  optional string full_name = 5;
+  optional string bio = 6;
+}
+
+message CreateUserResponse {
+  User user = 1;
+}

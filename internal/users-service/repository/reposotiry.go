@@ -4,8 +4,9 @@ import (
 	"context"
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"story-pulse/internal/shared/dbx"
-	apperrors "story-pulse/internal/shared/error"
 	. "story-pulse/internal/users-service/models"
 )
 
@@ -54,9 +55,9 @@ func (r *Repository) GetUserByID(ctx context.Context, userId int) (*User, error)
 
 	switch {
 	case dbx.IsNoRows(err):
-		return nil, apperrors.NotFound("user", "id", userId)
+		return nil, status.Errorf(codes.NotFound, "user %d not found", userId)
 	case err != nil:
-		return nil, apperrors.InternalWithoutStackTrace(err)
+		return nil, status.Errorf(codes.Internal, "cannot fetch user: %v", err)
 	}
 
 	return &user, nil
@@ -92,11 +93,11 @@ func (r *Repository) CreateUser(ctx context.Context, user *UserWithPassword) (*U
 
 	switch {
 	case dbx.IsUniqueViolation(err, "email"):
-		return nil, apperrors.AlreadyExists("user", "email", user.Email)
+		return nil, status.Errorf(codes.AlreadyExists, "user with email %s already exists", user.Email)
 	case dbx.IsUniqueViolation(err, "username"):
-		return nil, apperrors.AlreadyExists("user", "username", user.Username)
+		return nil, status.Errorf(codes.AlreadyExists, "user with username %s already exists", user.Username)
 	case err != nil:
-		return nil, apperrors.Internal(err)
+		return nil, status.Errorf(codes.Internal, "cannot create user: %v", err)
 	}
 
 	return user.User, nil

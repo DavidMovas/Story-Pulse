@@ -1,18 +1,20 @@
 package handlers
 
 import (
-	"github.com/labstack/echo/v4"
+	"context"
 	"go.uber.org/zap"
-	"net/http"
-	"story-pulse/internal/shared/echox"
-	apperrors "story-pulse/internal/shared/error"
+	grpc "story-pulse/internal/shared/grpc/v1"
 	. "story-pulse/internal/users-service/models"
 	. "story-pulse/internal/users-service/service"
 )
 
+var _ grpc.UsersServiceServer = (*Handler)(nil)
+
 type Handler struct {
 	service *Service
 	logger  *zap.SugaredLogger
+
+	grpc.UnimplementedUsersServiceServer
 }
 
 func NewHandler(service *Service, logger *zap.SugaredLogger) *Handler {
@@ -22,36 +24,21 @@ func NewHandler(service *Service, logger *zap.SugaredLogger) *Handler {
 	}
 }
 
-func (h *Handler) Health(c echo.Context) error {
-	return c.String(http.StatusOK, "OK")
+func (h *Handler) GetUserByID(ctx context.Context, request *grpc.GetUserByIDRequest) (*grpc.GetUserByIDResponse, error) {
+	userId := int(request.GetId())
+	user, err := h.service.GetUserByID(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &grpc.GetUserByIDResponse{User: user.ToGRPC()}, nil
 }
 
-func (h *Handler) GetUserByID(c echo.Context) error {
-	ctx := c.Request().Context()
-	req, err := echox.BindAndValidate[GetUserByIDRequest](c)
+func (h *Handler) CreateUser(ctx context.Context, request *grpc.CreateUserRequest) (*grpc.CreateUserResponse, error) {
+	user, err := h.service.CreateUser(ctx, ToUserWithPassword(request))
 	if err != nil {
-		return apperrors.BadRequest(err)
+		return nil, err
 	}
 
-	user, err := h.service.GetUserByID(ctx, req.ID)
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusOK, user)
-}
-
-func (h *Handler) CreateUser(c echo.Context) error {
-	ctx := c.Request().Context()
-	req, err := echox.BindAndValidate[CreateUserRequest](c)
-	if err != nil {
-		return apperrors.BadRequest(err)
-	}
-
-	user, err := h.service.CreateUser(ctx, req)
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusOK, user)
+	return &grpc.CreateUserResponse{User: user.ToGRPC()}, nil
 }

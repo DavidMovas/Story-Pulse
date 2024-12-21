@@ -1,15 +1,16 @@
 package middlewares
 
 import (
-	"github.com/labstack/echo/v4"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
+	"net/http"
 )
 
-func NewLoggerMiddleware(logger *zap.SugaredLogger) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			logger.Infow("Request", "METHOD", c.Request().Method, "URL", c.Request().URL.String(), "QUERY", c.Request().URL.RawQuery)
-			return next(c)
+func NewLoggerMiddleware(logger *zap.SugaredLogger) runtime.Middleware {
+	return func(next runtime.HandlerFunc) runtime.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+			logger.Infow("Request", "Method", r.Method, "Url", r.RequestURI)
+			next(w, r, pathParams)
 		}
 	}
 }
