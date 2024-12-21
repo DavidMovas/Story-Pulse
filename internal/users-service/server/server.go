@@ -2,13 +2,13 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"net"
-	"story-pulse/internal/shared/echox"
+	usersGrpc "story-pulse/internal/shared/grpc/v1"
 	"story-pulse/internal/shared/validation"
 	"story-pulse/internal/users-service/config"
 	"story-pulse/internal/users-service/handlers"
@@ -17,9 +17,12 @@ import (
 )
 
 type Server struct {
-	e      *echo.Echo
-	logger *zap.SugaredLogger
-	cfg    *config.Config
+	grpcServer *grpc.Server
+	listener   net.Listener
+	logger     *zap.SugaredLogger
+	cfg        *config.Config
+
+	closers []func() error
 }
 
 func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
@@ -29,17 +32,7 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	}()
 
 	sugar := logger.Sugar()
-
 	validation.SetupValidators()
-
-	e := echo.New()
-
-	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
-
-	e.HTTPErrorHandler = echox.ErrorHandler
-	e.HideBanner = true
-	e.HidePort = true
 
 	db, err := connectDB(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -50,43 +43,54 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	srv := service.NewService(rep)
 	handler := handlers.NewHandler(srv, sugar)
 
-	api := e.Group("/users")
-
-	api.GET("/health", handler.Health)
-
-	api.GET("/:userId", handler.GetUserByID)
-	api.POST("", handler.CreateUser)
+	grpcServer := grpc.NewServer()
+	usersGrpc.RegisterUsersServiceServer(grpcServer, handler)
 
 	return &Server{
-		e:      e,
-		logger: sugar,
-		cfg:    cfg,
+		grpcServer: grpcServer,
+		logger:     sugar,
+		cfg:        cfg,
+		closers: []func() error{func() error {
+			db.Close()
+			return nil
+		}},
 	}, nil
 }
 
-func (s *Server) Run() error {
+func (s *Server) Run() (err error) {
 	port := s.cfg.WebPort
 	s.logger.Infof("starting server on port %d", port)
 
-	return s.e.Start(fmt.Sprintf(":%d", port))
+	s.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
+
+	s.closers = append(s.closers, s.listener.Close)
+
+	return nil
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	return s.e.Shutdown(ctx)
+	stopped := make(chan struct{})
+
+	go func() {
+		s.grpcServer.GracefulStop()
+		close(stopped)
+	}()
+
+	select {
+	case <-ctx.Done():
+		s.grpcServer.Stop()
+	case <-stopped:
+	}
+
+	return withClosers(s.closers, nil)
 }
 
 func (s *Server) Port() (int, error) {
-	listener := s.e.Listener
-	if listener == nil {
-		return 0, fmt.Errorf("no listener configured")
+	if s.listener == nil || s.listener.Addr() == nil {
+		return 0, fmt.Errorf("server is not running")
 	}
 
-	addr := listener.Addr()
-	if addr == nil {
-		return 0, fmt.Errorf("no listener address")
-	}
-
-	return addr.(*net.TCPAddr).Port, nil
+	return s.listener.Addr().(*net.TCPAddr).Port, nil
 }
 
 func connectDB(ctx context.Context, connString string) (db *pgxpool.Pool, err error) {
@@ -100,4 +104,16 @@ func connectDB(ctx context.Context, connString string) (db *pgxpool.Pool, err er
 	}
 
 	return db, nil
+}
+
+func withClosers(closers []func() error, err error) error {
+	errs := []error{err}
+
+	for i := len(closers) - 1; i >= 0; i-- {
+		if err = closers[i](); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return errors.Join(errs...)
 }

@@ -20,11 +20,13 @@ func (s *Service) GetUserByID(ctx context.Context, userId int) (*User, error) {
 	return s.repo.GetUserByID(ctx, userId)
 }
 
-func (s *Service) CreateUser(ctx context.Context, user *CreateUserRequest) (*User, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+func (s *Service) CreateUser(ctx context.Context, user *UserWithPassword) (*User, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.PasswordHash), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, apperrors.InternalWithoutStackTrace(err)
 	}
 
-	return s.repo.CreateUser(ctx, user.ToUserWithPassword(string(hash)))
+	user.PasswordHash = string(hash)
+
+	return s.repo.CreateUser(ctx, user)
 }
