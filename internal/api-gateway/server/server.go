@@ -10,6 +10,7 @@ import (
 	"story-pulse/internal/api-gateway/gateway"
 	"story-pulse/internal/api-gateway/handlers"
 	"story-pulse/internal/api-gateway/middlewares"
+	"story-pulse/internal/api-gateway/options"
 	grpcServices "story-pulse/internal/shared/grpc/v1"
 )
 
@@ -38,6 +39,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	mux.HandleFunc("/health", handler.Health)
 
 	muxOpts := []gwruntime.ServeMuxOption{
+		gwruntime.WithErrorHandler(options.CustomErrorHandler),
 		gwruntime.WithMiddlewares(middlewares.NewLoggerMiddleware(sugar)),
 	}
 
