@@ -5,10 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go-micro.dev/v5"
+	"go-micro.dev/v5/registry"
+	"go-micro.dev/v5/server"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"net"
-	usersGrpc "story-pulse/internal/shared/grpc/v1"
+	v1 "story-pulse/internal/shared/grpc/v1"
 	"story-pulse/internal/shared/validation"
 	"story-pulse/internal/users-service/config"
 	"story-pulse/internal/users-service/handlers"
@@ -34,6 +38,30 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	sugar := logger.Sugar().WithOptions(zap.WithCaller(false))
 	validation.SetupValidators()
 
+	register := registry.NewRegistry(registry.Addrs(fmt.Sprintf("%s", cfg.ConsulAddr)))
+	err := register.Register(&registry.Service{
+		Name:    "users-service",
+		Version: "latest",
+		Nodes: []*registry.Node{
+			{
+				Id:       "users-service",
+				Address:  fmt.Sprintf("%d", cfg.GRPCPort),
+				Metadata: map[string]string{},
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	microServer := micro.NewService(
+		micro.Name("users.service"),
+		micro.Version("latest"),
+		micro.Registry(register),
+	)
+
+	microServer.Init()
+
 	db, err := connectDB(ctx, cfg.DatabaseURL)
 	if err != nil {
 		return nil, err
@@ -44,7 +72,15 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	handler := handlers.NewHandler(srv, sugar)
 
 	grpcServer := grpc.NewServer()
-	usersGrpc.RegisterUsersServiceServer(grpcServer, handler)
+
+	v1.RegisterUsersServiceServer(grpcServer, handler)
+
+	err = microServer.Server().Init(server.Address(fmt.Sprintf("%d", cfg.GRPCPort)))
+	if err != nil {
+		return nil, err
+	}
+
+	reflection.Register(grpcServer)
 
 	return &Server{
 		grpcServer: grpcServer,

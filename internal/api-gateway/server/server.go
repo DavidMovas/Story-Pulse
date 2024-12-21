@@ -38,6 +38,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	handler := handlers.NewHandler(sugar)
 	mux.HandleFunc("/health", handler.Health)
 
+	//TODO: Forward and Backward option for logging
 	muxOpts := []gwruntime.ServeMuxOption{
 		gwruntime.WithErrorHandler(options.CustomErrorHandler),
 		gwruntime.WithMiddlewares(middlewares.NewLoggerMiddleware(sugar)),
