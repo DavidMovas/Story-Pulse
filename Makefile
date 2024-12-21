@@ -13,4 +13,9 @@ down-gateway:
 
 # Protobuf generate
 proto-gen:
-	protoc --go_out=./internal/shared --go-grpc_out=./internal/shared --proto_path=./scripts/proto ./scripts/proto/*.proto
+	protoc \
+      -I ./scripts/proto \
+      -I /home/nofre/go/pkg/mod/github.com/googleapis/googleapis@v0.0.0-20241220203547-09b3c838b775 \
+      --go_out=./internal/shared \
+      --go-grpc_out=./internal/shared \
+      ./scripts/proto/*.proto

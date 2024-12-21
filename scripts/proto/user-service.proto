@@ -2,13 +2,23 @@ syntax = "proto3";
 
 package userservice.v1;
 
-option go_package = "./grpc";
+option go_package = "./grpc/v1";
 
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
 
-service UsersServiceV1 {
-  rpc GetUserByID(GetUserByIDRequest) returns (GetUserByIDResponse);
-  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+service UsersService {
+  rpc GetUserByID(GetUserByIDRequest) returns (GetUserByIDResponse) {
+    option (google.api.http) = {
+      get: "/users/v1/{id}"
+    };
+  }
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
+    option (google.api.http) = {
+      post: "/users/v1"
+      body: "*"
+    };
+  }
 }
 
 message User {
