@@ -11,32 +11,14 @@ services:
       PORT: ${API_GATEWAY_PORT}
       GRPC_PORT: ${API_GATEWAY_GRPC_PORT}
       GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
-      USERS_SERVICE_URL: http://users-service:${USERS_SERVICE_WEB_PORT}
+      USERS_SERVICE_URL: users-service:${USERS_SERVICE_WEB_PORT}
       USERS_SERVICE_PATH: users
-      AUTH_SERVICE_URL: http://auth-service:${USERS_SERVICE_WEB_PORT}
-      AUTH_SERVICE_PATH: auth
     ports:
       - ${API_GATEWAY_PORT}:${API_GATEWAY_PORT}
     networks:
       - gateway
     depends_on:
       - users-service
-      - auth-service
-
-  auth-service:
-    container_name: auth-service
-    build:
-      context: .
-      dockerfile: ./deployments/docker/auth-service.dockerfile
-    environment:
-      PORT: ${AUTH_SERVICE_WEB_PORT}
-      GRPC_PORT: ${AUTH_SERVICE_GRPC_PORT}
-      GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
-    ports:
-      - ${AUTH_SERVICE_WEB_PORT}
-    networks:
-      - gateway
-      - default
 
   users-service:
     container_name: users-service
@@ -49,7 +31,7 @@ services:
       GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
       DATABASE_URL: postgres://${USERS_DB_USERNAME}:${USERS_DB_PASSWORD}@users_postgres:5432/${USERS_DB_NAME}
     ports:
-      - ${USERS_SERVICE_WEB_PORT}
+      - ${USERS_SERVICE_WEB_PORT}:${USERS_SERVICE_WEB_PORT}
     networks:
       - gateway
       - default

@@ -24,4 +24,5 @@ proto-gen:
       --grpc-gateway_opt logtostderr=true \
       --go-grpc_opt paths=source_relative \
       --grpc-gateway_opt paths=source_relative \
+      --experimental_allow_proto3_optional=true \
       ./scripts/proto/*.proto

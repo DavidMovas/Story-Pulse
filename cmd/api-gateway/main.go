@@ -30,7 +30,9 @@ func main() {
 		<-signalCh
 		slog.Info("Shutting down server...")
 
-		srv.Stop()
+		if err = srv.Stop(); err != nil {
+			slog.Warn("failed to stop server", "err", err)
+		}
 	}()
 
 	if err = srv.Run(); err != nil {

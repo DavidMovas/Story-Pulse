@@ -1,16 +1,14 @@
 package helpers
 
-func GetPrt[T any](v any) *T {
-	prt := new(T)
+import (
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"time"
+)
 
-	*prt = v
-	return prt
-}
-
-func GetPtrOrNil[T any](v any) *T {
-	if v == nil {
+func ToTimestamp(time *time.Time) *timestamppb.Timestamp {
+	if time == nil {
 		return nil
 	}
 
-	return new(T)
+	return timestamppb.New(*time)
 }

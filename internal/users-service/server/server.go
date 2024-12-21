@@ -31,7 +31,7 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 		_ = logger.Sync()
 	}()
 
-	sugar := logger.Sugar()
+	sugar := logger.Sugar().WithOptions(zap.WithCaller(false))
 	validation.SetupValidators()
 
 	db, err := connectDB(ctx, cfg.DatabaseURL)
@@ -59,9 +59,9 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 
 func (s *Server) Run() (err error) {
 	port := s.cfg.WebPort
-	s.logger.Infof("starting server on port %d", port)
 
 	s.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
+	s.logger.Infof("starting server tcp port %d", port)
 
 	s.closers = append(s.closers, s.listener.Close)
 
