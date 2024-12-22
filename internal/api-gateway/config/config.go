@@ -35,3 +35,7 @@ type SearchServiceConfig struct {
 	ServiceURL  string `env:"URL"`
 	ServicePath string `env:"PATH"`
 }
+
+type ResolverConfig struct {
+	ConsulAddress string `env:"CONSUL_ADDRESS"`
+}

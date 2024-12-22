@@ -5,13 +5,14 @@ import (
 	"fmt"
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"net/http"
 	"story-pulse/internal/api-gateway/config"
 	"story-pulse/internal/api-gateway/gateway"
 	"story-pulse/internal/api-gateway/handlers"
 	"story-pulse/internal/api-gateway/middlewares"
 	"story-pulse/internal/api-gateway/options"
-	grpcServices "story-pulse/internal/shared/grpc/v1"
+	v1 "story-pulse/internal/shared/grpc/v1"
 )
 
 type Server struct {
@@ -47,9 +48,14 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	serviceOpts := []*gateway.ServiceOption{
 		{
 			Url:          cfg.UsersService.ServiceURL,
-			RegisterFunc: grpcServices.RegisterUsersServiceHandler,
+			RegisterFunc: v1.RegisterUsersServiceHandler,
 		},
 	}
+
+	grpc.WithResolvers()
+
+	//TODO: target =>
+	// v1.RegisterUsersServiceHandler
 
 	gt, err := gateway.NewGateway(serverCtx, sugar, muxOpts, serviceOpts...)
 	if err != nil {
