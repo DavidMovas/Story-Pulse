@@ -12,7 +12,7 @@ import (
 func init() { resolver.Register(&resolverBuilder{}) }
 
 const (
-	tickerTimeout = time.Second * 5
+	tickerTimeout = time.Second * 15
 	consulAddress = "http://consul:8500"
 )
 
