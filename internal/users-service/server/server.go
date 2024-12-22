@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"story-pulse/internal/shared/consul"
 	v1 "story-pulse/internal/shared/grpc/v1"
+	netHelpers "story-pulse/internal/shared/net"
 	"story-pulse/internal/shared/validation"
 	"story-pulse/internal/users-service/config"
 	"story-pulse/internal/users-service/handlers"
@@ -38,6 +39,9 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 
 	sugar := logger.Sugar().WithOptions(zap.WithCaller(false))
 	validation.SetupValidators()
+
+	cfg.WebPort, _ = netHelpers.FindFreePort(cfg.Address, cfg.WebPort)
+	cfg.GRPCPort, _ = netHelpers.FindFreePort(cfg.Address, cfg.GRPCPort)
 
 	db, err := connectDB(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -69,27 +73,14 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 }
 
 func (s *Server) Run() (err error) {
-	consulCfg := api.DefaultConfig()
-	consulCfg.Address = s.cfg.ConsulAddr
-	check := &api.AgentServiceCheck{
-		HTTP:     fmt.Sprintf("http://%s:%d/health", s.cfg.Address, s.cfg.WebPort),
-		Interval: "10s",
-		Timeout:  "2s",
-	}
-
-	consulClient, err := api.NewClient(consulCfg)
-
-	err = consul.RegisterService(consulClient, s.cfg.Name, s.cfg.Address, s.cfg.Tag, s.cfg.GRPCPort, check)
-	if err != nil {
-		return err
-	}
-
-	s.logger.Infow("Service registered in Consul", "Name", s.cfg.Name, "Address", s.cfg.Address, "Tag", s.cfg.Tag)
-
 	s.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.GRPCPort))
 	s.logger.Infof("starting server tcp port %d", s.cfg.GRPCPort)
 
 	s.closers = append(s.closers, s.listener.Close)
+
+	if err = s.register(); err != nil {
+		return err
+	}
 
 	go func() {
 		_ = http.ListenAndServe(fmt.Sprintf(":%d", s.cfg.WebPort), s.healthMux)
@@ -121,6 +112,26 @@ func (s *Server) Port() (int, error) {
 	}
 
 	return s.listener.Addr().(*net.TCPAddr).Port, nil
+}
+
+func (s *Server) register() error {
+	consulCfg := api.DefaultConfig()
+	consulCfg.Address = s.cfg.ConsulAddr
+	check := &api.AgentServiceCheck{
+		HTTP:     fmt.Sprintf("http://%s:%d/health", s.cfg.Address, s.cfg.WebPort),
+		Interval: "10s",
+		Timeout:  "2s",
+	}
+
+	consulClient, err := api.NewClient(consulCfg)
+
+	err = consul.RegisterService(consulClient, s.cfg.Name, s.cfg.Address, s.cfg.Tag, s.cfg.GRPCPort, check)
+	if err != nil {
+		return err
+	}
+
+	s.logger.Infow("Service registered in Consul", "Name", s.cfg.Name, "Address", s.cfg.Address, "Tag", s.cfg.Tag)
+	return nil
 }
 
 func connectDB(ctx context.Context, connString string) (db *pgxpool.Pool, err error) {

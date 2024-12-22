@@ -22,7 +22,6 @@ services:
       PORT: ${API_GATEWAY_PORT}
       GRPC_PORT: ${API_GATEWAY_GRPC_PORT}
       GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
-      USERS_SERVICE_URL: users-service:${USERS_SERVICE_GRPC_PORT}
       USERS_SERVICE_PATH: users-service
     ports:
       - ${API_GATEWAY_PORT}:${API_GATEWAY_PORT}
@@ -39,14 +38,13 @@ services:
     environment:
       NAME: users-service
       ADDRESS: users-service
-      TAG: v1
       PORT: ${USERS_SERVICE_WEB_PORT}
       GRPC_PORT: ${USERS_SERVICE_GRPC_PORT}
       GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
       CONSUL_ADDRESS: http://consul:8500
       DATABASE_URL: postgres://${USERS_DB_USERNAME}:${USERS_DB_PASSWORD}@users_postgres:5432/${USERS_DB_NAME}
-    ports:
-      - ${USERS_SERVICE_WEB_PORT}:${USERS_SERVICE_WEB_PORT}
+    expose:
+      - ${USERS_SERVICE_WEB_PORT}
     networks:
       - gateway
       - default
