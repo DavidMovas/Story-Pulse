@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/consul/api"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"go-micro.dev/v5/registry"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"net"
+	"story-pulse/internal/shared/consul"
 	v1 "story-pulse/internal/shared/grpc/v1"
 	"story-pulse/internal/shared/validation"
 	"story-pulse/internal/users-service/config"
@@ -36,29 +37,13 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	sugar := logger.Sugar().WithOptions(zap.WithCaller(false))
 	validation.SetupValidators()
 
-	register := registry.NewRegistry(registry.Addrs(fmt.Sprintf("%s", cfg.ConsulAddr)))
-	err := register.Register(&registry.Service{
-		Name:    "users-service",
-		Version: "latest",
-		Nodes: []*registry.Node{
-			{
-				Id:       "users-service",
-				Address:  fmt.Sprintf("%d", cfg.GRPCPort),
-				Metadata: map[string]string{},
-			},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	db, err := connectDB(ctx, cfg.DatabaseURL)
 	if err != nil {
 		return nil, err
 	}
 
-	rep := repository.NewRepository(db)
-	srv := service.NewService(rep)
+	repo := repository.NewRepository(db)
+	srv := service.NewService(repo)
 	handler := handlers.NewHandler(srv, sugar)
 
 	grpcServer := grpc.NewServer()
@@ -80,6 +65,16 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 
 func (s *Server) Run() (err error) {
 	port := s.cfg.WebPort
+
+	consulCfg := api.DefaultConfig()
+	consulCfg.Address = s.cfg.ConsulAddr
+
+	consulClient, err := api.NewClient(consulCfg)
+
+	err = consul.RegisterService(consulClient, s.cfg.Name, s.cfg.Address, s.cfg.Tag, s.cfg.GRPCPort)
+	if err != nil {
+		return err
+	}
 
 	s.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
 	s.logger.Infof("starting server tcp port %d", port)
