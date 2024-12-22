@@ -4,11 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/consul/api"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"net"
-	usersGrpc "story-pulse/internal/shared/grpc/v1"
+	"net/http"
+	"story-pulse/internal/shared/consul"
+	v1 "story-pulse/internal/shared/grpc/v1"
 	"story-pulse/internal/shared/validation"
 	"story-pulse/internal/users-service/config"
 	"story-pulse/internal/users-service/handlers"
@@ -18,6 +22,7 @@ import (
 
 type Server struct {
 	grpcServer *grpc.Server
+	healthMux  *http.ServeMux
 	listener   net.Listener
 	logger     *zap.SugaredLogger
 	cfg        *config.Config
@@ -39,15 +44,21 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 		return nil, err
 	}
 
-	rep := repository.NewRepository(db)
-	srv := service.NewService(rep)
+	repo := repository.NewRepository(db)
+	srv := service.NewService(repo)
 	handler := handlers.NewHandler(srv, sugar)
 
 	grpcServer := grpc.NewServer()
-	usersGrpc.RegisterUsersServiceServer(grpcServer, handler)
+	healthMux := http.NewServeMux()
+	healthMux.HandleFunc("/health", handler.Health)
+
+	v1.RegisterUsersServiceServer(grpcServer, handler)
+
+	reflection.Register(grpcServer)
 
 	return &Server{
 		grpcServer: grpcServer,
+		healthMux:  healthMux,
 		logger:     sugar,
 		cfg:        cfg,
 		closers: []func() error{func() error {
@@ -58,12 +69,31 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 }
 
 func (s *Server) Run() (err error) {
-	port := s.cfg.WebPort
+	consulCfg := api.DefaultConfig()
+	consulCfg.Address = s.cfg.ConsulAddr
+	check := &api.AgentServiceCheck{
+		HTTP:     fmt.Sprintf("http://%s:%d/health", s.cfg.Address, s.cfg.WebPort),
+		Interval: "10s",
+		Timeout:  "2s",
+	}
 
-	s.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
-	s.logger.Infof("starting server tcp port %d", port)
+	consulClient, err := api.NewClient(consulCfg)
+
+	err = consul.RegisterService(consulClient, s.cfg.Name, s.cfg.Address, s.cfg.Tag, s.cfg.GRPCPort, check)
+	if err != nil {
+		return err
+	}
+
+	s.logger.Infow("Service registered in Consul", "Name", s.cfg.Name, "Address", s.cfg.Address, "Tag", s.cfg.Tag)
+
+	s.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.GRPCPort))
+	s.logger.Infof("starting server tcp port %d", s.cfg.GRPCPort)
 
 	s.closers = append(s.closers, s.listener.Close)
+
+	go func() {
+		_ = http.ListenAndServe(fmt.Sprintf(":%d", s.cfg.WebPort), s.healthMux)
+	}()
 
 	return s.grpcServer.Serve(s.listener)
 }

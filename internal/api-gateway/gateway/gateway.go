@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"errors"
+	"fmt"
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -11,7 +12,7 @@ import (
 )
 
 type ServiceOption struct {
-	Url          string
+	Name         string
 	RegisterFunc func(ctx context.Context, mux *gwruntime.ServeMux, conn *grpc.ClientConn) error
 }
 
@@ -29,12 +30,12 @@ func NewGateway(ctx context.Context, logger *zap.SugaredLogger, opts []gwruntime
 	gateway.mux = mux
 
 	for _, opt := range serviceOpts {
-		conn, err := dial(opt.Url, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := dial(fmt.Sprintf("dynamic:///%s", opt.Name), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return nil, err
 		}
 
-		logger.Infof("Connection established with %s", opt.Url)
+		logger.Infof("Connection established with %s", opt.Name)
 
 		gateway.coons = append(gateway.coons, conn)
 
