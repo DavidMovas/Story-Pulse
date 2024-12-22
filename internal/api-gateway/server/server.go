@@ -12,6 +12,7 @@ import (
 	"story-pulse/internal/api-gateway/handlers"
 	"story-pulse/internal/api-gateway/middlewares"
 	"story-pulse/internal/api-gateway/options"
+	_ "story-pulse/internal/api-gateway/resolver"
 	v1 "story-pulse/internal/shared/grpc/v1"
 )
 
@@ -39,7 +40,6 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	handler := handlers.NewHandler(sugar)
 	mux.HandleFunc("/health", handler.Health)
 
-	//TODO: Forward and Backward option for logging
 	muxOpts := []gwruntime.ServeMuxOption{
 		gwruntime.WithErrorHandler(options.CustomErrorHandler),
 		gwruntime.WithMiddlewares(middlewares.NewLoggerMiddleware(sugar)),
@@ -47,15 +47,12 @@ func NewServer(cfg *config.Config) (*Server, error) {
 
 	serviceOpts := []*gateway.ServiceOption{
 		{
-			Url:          cfg.UsersService.ServiceURL,
+			Name:         cfg.UsersService.ServicePath,
 			RegisterFunc: v1.RegisterUsersServiceHandler,
 		},
 	}
 
 	grpc.WithResolvers()
-
-	//TODO: target =>
-	// v1.RegisterUsersServiceHandler
 
 	gt, err := gateway.NewGateway(serverCtx, sugar, muxOpts, serviceOpts...)
 	if err != nil {

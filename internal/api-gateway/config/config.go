@@ -12,27 +12,22 @@ type Config struct {
 }
 
 type UsersServiceConfig struct {
-	ServiceURL  string `env:"URL"`
 	ServicePath string `env:"PATH"`
 }
 
 type AuthServiceConfig struct {
-	ServiceURL  string `env:"URL"`
 	ServicePath string `env:"PATH"`
 }
 
 type ContentServiceConfig struct {
-	ServiceURL  string `env:"URL"`
 	ServicePath string `env:"PATH"`
 }
 
 type CommentServiceConfig struct {
-	ServiceURL  string `env:"URL"`
 	ServicePath string `env:"PATH"`
 }
 
 type SearchServiceConfig struct {
-	ServiceURL  string `env:"URL"`
 	ServicePath string `env:"PATH"`
 }
 

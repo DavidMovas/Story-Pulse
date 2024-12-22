@@ -5,9 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"go-micro.dev/v5"
 	"go-micro.dev/v5/registry"
-	"go-micro.dev/v5/server"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -54,14 +52,6 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 		return nil, err
 	}
 
-	microServer := micro.NewService(
-		micro.Name("users.service"),
-		micro.Version("latest"),
-		micro.Registry(register),
-	)
-
-	microServer.Init()
-
 	db, err := connectDB(ctx, cfg.DatabaseURL)
 	if err != nil {
 		return nil, err
@@ -74,11 +64,6 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	grpcServer := grpc.NewServer()
 
 	v1.RegisterUsersServiceServer(grpcServer, handler)
-
-	err = microServer.Server().Init(server.Address(fmt.Sprintf("%d", cfg.GRPCPort)))
-	if err != nil {
-		return nil, err
-	}
 
 	reflection.Register(grpcServer)
 
