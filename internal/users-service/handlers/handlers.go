@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"go.uber.org/zap"
+	"net/http"
 	grpc "story-pulse/internal/shared/grpc/v1"
 	. "story-pulse/internal/users-service/models"
 	. "story-pulse/internal/users-service/service"
@@ -41,4 +42,9 @@ func (h *Handler) CreateUser(ctx context.Context, request *grpc.CreateUserReques
 	}
 
 	return &grpc.CreateUserResponse{User: user.ToGRPC()}, nil
+}
+
+func (h *Handler) Health(writer http.ResponseWriter, request *http.Request) {
+	writer.WriteHeader(http.StatusOK)
+	_, _ = writer.Write([]byte("ok"))
 }

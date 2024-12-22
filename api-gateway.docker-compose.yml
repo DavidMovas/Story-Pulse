@@ -22,8 +22,8 @@ services:
       PORT: ${API_GATEWAY_PORT}
       GRPC_PORT: ${API_GATEWAY_GRPC_PORT}
       GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
-      USERS_SERVICE_URL: users-service:${USERS_SERVICE_WEB_PORT}
-      USERS_SERVICE_PATH: users
+      USERS_SERVICE_URL: users-service:${USERS_SERVICE_GRPC_PORT}
+      USERS_SERVICE_PATH: users-service
     ports:
       - ${API_GATEWAY_PORT}:${API_GATEWAY_PORT}
     networks:

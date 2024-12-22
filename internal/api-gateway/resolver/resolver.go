@@ -1,6 +1,7 @@
 package resolver
 
 import (
+	"fmt"
 	"github.com/hashicorp/consul/api"
 	"github.com/labstack/gommon/log"
 	"google.golang.org/grpc/resolver"
@@ -12,7 +13,7 @@ func init() { resolver.Register(&resolverBuilder{}) }
 
 const (
 	tickerTimeout = time.Second * 5
-	consulAddress = "127.0.0.1:8500"
+	consulAddress = "http://consul:8500"
 )
 
 var _ resolver.Builder = (*resolverBuilder)(nil)
@@ -26,6 +27,7 @@ func (*resolverBuilder) Build(target resolver.Target, cc resolver.ClientConn, op
 		return nil, err
 	}
 
+	r.refreshAddresses()
 	go r.watchUpdates()
 	return r, nil
 }
@@ -40,14 +42,21 @@ type Resolver struct {
 	cc        resolver.ClientConn
 	opts      resolver.BuildOptions
 	addresses []resolver.Address
-	mu        sync.RWMutex
+	mu        sync.Mutex
 
 	ticker        *time.Ticker
 	tickerTimeout time.Duration
 }
 
-func (r *Resolver) ResolveNow(options resolver.ResolveNowOptions) {
-	//Async resolving
+func (r *Resolver) ResolveNow(_ resolver.ResolveNowOptions) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if len(r.addresses) == 0 {
+		r.refreshAddresses()
+	}
+
+	_ = r.UpdateState(resolver.State{Addresses: r.addresses})
 }
 
 func (r *Resolver) Close() {
@@ -81,28 +90,54 @@ func (r *Resolver) watchUpdates() {
 		case <-r.ticker.C:
 			services, _, err := r.consul.Health().Service(r.target.Endpoint(), "", true, nil)
 			if err != nil {
-				log.Errorf("failed to load healty services from consul: %v", err)
+				log.Errorf("failed to load healty services from consul with endpoint: %s error: %v", r.target.Endpoint(), err)
 				r.ticker.Reset(r.tickerTimeout)
 				continue
 			}
 
-			var addresses []resolver.Address
-			for _, service := range services {
-				addr := service.Service.Address
-				if addr == "" {
-					addr = service.Node.Address
+			var addresses = make([]resolver.Address, len(services))
+			for i, service := range services {
+				addresses[i] = resolver.Address{
+					Addr: fmt.Sprintf("%s:%d", service.Service.Address, service.Service.Port),
 				}
-
-				addresses = append(addresses, resolver.Address{Addr: addr + ":" + string(rune(service.Service.Port))})
 			}
 
 			r.mu.Lock()
 			r.addresses = addresses
 			r.mu.Unlock()
 
-			if err = r.cc.UpdateState(resolver.State{Addresses: addresses}); err != nil {
+			if err = r.UpdateState(resolver.State{Addresses: addresses}); err != nil {
 				log.Errorf("failed to update resolver state: %v", err)
 			}
 		}
+	}
+}
+
+func (r *Resolver) UpdateState(state resolver.State) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	return r.cc.UpdateState(state)
+}
+
+func (r *Resolver) refreshAddresses() {
+	services, _, err := r.consul.Health().Service(r.target.Endpoint(), "", true, nil)
+	if err != nil {
+		log.Errorf("failed to load healty services from consul with endpoint: %s error: %v", r.target.Endpoint(), err)
+	}
+
+	var addresses = make([]resolver.Address, len(services))
+	for i, service := range services {
+		addresses[i] = resolver.Address{
+			Addr: fmt.Sprintf("%s:%d", service.Service.Address, service.Service.Port),
+		}
+	}
+
+	r.mu.Lock()
+	r.addresses = addresses
+	r.mu.Unlock()
+
+	if err = r.UpdateState(resolver.State{Addresses: addresses}); err != nil {
+		log.Errorf("failed to update resolver state: %v", err)
 	}
 }
