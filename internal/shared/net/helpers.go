@@ -5,16 +5,19 @@ import (
 	"net"
 )
 
-func CheckPortAvailable(host string, port int) bool {
-	addr := fmt.Sprintf("%s:%d", host, port)
-
-	listener, err := net.Listen("tcp", addr)
+func ReservePort(host string, port int) (listener net.Listener, err error) {
+	port, err = FindFreePort(host, port)
 	if err != nil {
-		return false
+		return nil, err
 	}
 
-	_ = listener.Close()
-	return true
+	addr := fmt.Sprintf("%s:%d", host, port)
+	listener, err = net.Listen("tcp", addr)
+	if err != nil {
+		return nil, err
+	}
+
+	return listener, nil
 }
 
 func FindFreePort(host string, startPort int) (int, error) {
@@ -29,4 +32,16 @@ func FindFreePort(host string, startPort int) (int, error) {
 			return 0, fmt.Errorf("port %d is out of range", port)
 		}
 	}
+}
+
+func CheckPortAvailable(host string, port int) bool {
+	addr := fmt.Sprintf("%s:%d", host, port)
+
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		return false
+	}
+
+	_ = listener.Close()
+	return true
 }

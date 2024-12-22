@@ -12,7 +12,6 @@ services:
     networks:
       - gateway
 
-
   api-gateway:
     container_name: api-gateway
     build:
@@ -27,11 +26,8 @@ services:
       - ${API_GATEWAY_PORT}:${API_GATEWAY_PORT}
     networks:
       - gateway
-    depends_on:
-      - users-service
 
   users-service:
-    container_name: users-service
     build:
       context: .
       dockerfile: ./deployments/docker/users-service.dockerfile
@@ -43,11 +39,11 @@ services:
       GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
       CONSUL_ADDRESS: http://consul:8500
       DATABASE_URL: postgres://${USERS_DB_USERNAME}:${USERS_DB_PASSWORD}@users_postgres:5432/${USERS_DB_NAME}
-    expose:
-      - ${USERS_SERVICE_WEB_PORT}
     networks:
       - gateway
       - default
+    deploy:
+      replicas: 3
     depends_on:
       consul:
         condition: service_started

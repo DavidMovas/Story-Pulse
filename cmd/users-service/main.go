@@ -21,6 +21,8 @@ func main() {
 		slog.Warn("failed to parse config", "err", err)
 	}
 
+	cfg.SetDefaults()
+
 	srv, err := server.NewServer(ctx, cfg)
 	if err != nil {
 		slog.Warn("failed to create server", "err", err)

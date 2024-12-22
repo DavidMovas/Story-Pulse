@@ -13,7 +13,7 @@ import (
 	"net/http"
 	"story-pulse/internal/shared/consul"
 	v1 "story-pulse/internal/shared/grpc/v1"
-	netHelpers "story-pulse/internal/shared/net"
+	net2 "story-pulse/internal/shared/net"
 	"story-pulse/internal/shared/validation"
 	"story-pulse/internal/users-service/config"
 	"story-pulse/internal/users-service/handlers"
@@ -39,9 +39,6 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 
 	sugar := logger.Sugar().WithOptions(zap.WithCaller(false))
 	validation.SetupValidators()
-
-	cfg.WebPort, _ = netHelpers.FindFreePort(cfg.Address, cfg.WebPort)
-	cfg.GRPCPort, _ = netHelpers.FindFreePort(cfg.Address, cfg.GRPCPort)
 
 	db, err := connectDB(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -73,7 +70,12 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 }
 
 func (s *Server) Run() (err error) {
-	s.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", s.cfg.GRPCPort))
+	s.listener, err = net2.ReservePort("", s.cfg.GRPCPort)
+	if err != nil {
+		return fmt.Errorf("cannot reserve grpc port: %w", err)
+	}
+
+	s.logger.Infof("starting server http port %d", s.cfg.WebPort)
 	s.logger.Infof("starting server tcp port %d", s.cfg.GRPCPort)
 
 	s.closers = append(s.closers, s.listener.Close)

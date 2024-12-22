@@ -2,11 +2,12 @@ package consul
 
 import (
 	"github.com/hashicorp/consul/api"
+	"strconv"
 )
 
 func RegisterService(client *api.Client, name, address, tag string, port int, check *api.AgentServiceCheck) error {
 	registration := &api.AgentServiceRegistration{
-		ID:      name + "-" + tag,
+		ID:      name + "-" + tag + "-" + strconv.Itoa(port),
 		Name:    name,
 		Address: address,
 		Port:    port,
