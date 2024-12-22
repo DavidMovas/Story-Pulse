@@ -12,6 +12,7 @@ func init() { resolver.Register(&resolverBuilder{}) }
 
 const (
 	tickerTimeout = time.Second * 5
+	consulAddress = "127.0.0.1:8500"
 )
 
 var _ resolver.Builder = (*resolverBuilder)(nil)
@@ -55,7 +56,7 @@ func (r *Resolver) Close() {
 
 func NewResolver(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (*Resolver, error) {
 	consulConfig := api.DefaultConfig()
-	consulConfig.Address = ""
+	consulConfig.Address = consulAddress
 
 	client, err := api.NewClient(consulConfig)
 	if err != nil {

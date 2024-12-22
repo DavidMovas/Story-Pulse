@@ -76,6 +76,8 @@ func (s *Server) Run() (err error) {
 		return err
 	}
 
+	s.logger.Infow("Service registered in Consul", "Name", s.cfg.Name, "Address", s.cfg.Address, "Tag", s.cfg.Tag)
+
 	s.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
 	s.logger.Infof("starting server tcp port %d", port)
 

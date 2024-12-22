@@ -2,6 +2,17 @@ version: "3"
 
 services:
 
+  consul:
+    container_name: consul
+    image: consul:1.15
+    ports:
+      - "8500:8500"      # Интерфейс Consul
+      - "8600:8600/udp"  # DNS Consul (опционально)
+    command: agent -dev -client=0.0.0.0
+    networks:
+      - gateway
+
+
   api-gateway:
     container_name: api-gateway
     build:
@@ -26,9 +37,13 @@ services:
       context: .
       dockerfile: ./deployments/docker/users-service.dockerfile
     environment:
+      NAME: users-service
+      ADDRESS: users-service
+      TAG: v1
       PORT: ${USERS_SERVICE_WEB_PORT}
       GRPC_PORT: ${USERS_SERVICE_GRPC_PORT}
       GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
+      CONSUL_ADDRESS: http://consul:8500
       DATABASE_URL: postgres://${USERS_DB_USERNAME}:${USERS_DB_PASSWORD}@users_postgres:5432/${USERS_DB_NAME}
     ports:
       - ${USERS_SERVICE_WEB_PORT}:${USERS_SERVICE_WEB_PORT}
@@ -36,6 +51,8 @@ services:
       - gateway
       - default
     depends_on:
+      consul:
+        condition: service_started
       users_postgres:
         condition: service_healthy
 
