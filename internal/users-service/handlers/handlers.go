@@ -44,7 +44,7 @@ func (h *Handler) CreateUser(ctx context.Context, request *grpc.CreateUserReques
 	return &grpc.CreateUserResponse{User: user.ToGRPC()}, nil
 }
 
-func (h *Handler) Health(writer http.ResponseWriter, request *http.Request) {
+func (h *Handler) Health(writer http.ResponseWriter, _ *http.Request) {
 	writer.WriteHeader(http.StatusOK)
 	_, _ = writer.Write([]byte("ok"))
 }
