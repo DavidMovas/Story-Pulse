@@ -48,7 +48,7 @@ func (a *Interceptor) Intercept(ctx context.Context, req any, info *grpc.UnarySe
 		return nil, status.Errorf(codes.Unauthenticated, "insufficient permission")
 	}
 
-	tokenStr := md["authorization"][0]
+	tokenStr := md.Get("token")[0]
 	a.logger.Infof("TOKEN %s", tokenStr)
 
 	res, err := a.client.CheckToken(ctx, &v1.CheckTokenRequest{

@@ -42,7 +42,10 @@ func NewServer(cfg *config.Config) (*Server, error) {
 
 	muxOpts := []gwruntime.ServeMuxOption{
 		gwruntime.WithErrorHandler(options.CustomErrorHandler),
-		gwruntime.WithMiddlewares(middlewares.NewLoggerMiddleware(sugar)),
+		gwruntime.WithMiddlewares(
+			middlewares.NewLoggerMiddleware(sugar),
+			middlewares.NewAuthMiddleware(),
+		),
 	}
 
 	serviceOpts := []*gateway.ServiceOption{

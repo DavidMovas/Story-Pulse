@@ -2,24 +2,34 @@ package options
 
 import (
 	"context"
-	"fmt"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
 )
 
 var _ credentials.PerRPCCredentials = (*AuthenticateCredentials)(nil)
 
-type AuthenticateCredentials struct {
-	token string
-}
+type AuthenticateCredentials struct{}
 
 func NewAuthenticateCredentials() *AuthenticateCredentials {
 	return &AuthenticateCredentials{}
 }
 
-func (a *AuthenticateCredentials) GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
-	return map[string]string{
-		"authorization": fmt.Sprintf("Bearer %s", a.token),
-	}, nil
+func (a *AuthenticateCredentials) GetRequestMetadata(ctx context.Context, _ ...string) (map[string]string, error) {
+	var metaMap = make(map[string]string)
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return metaMap, nil
+	}
+
+	if token := md.Get("token")[0]; token != "" {
+		metaMap["token"] = token
+	}
+
+	if userId := md.Get("userId")[0]; userId != "" {
+		metaMap["userId"] = userId
+	}
+
+	return metaMap, nil
 }
 
 func (a *AuthenticateCredentials) RequireTransportSecurity() bool {
