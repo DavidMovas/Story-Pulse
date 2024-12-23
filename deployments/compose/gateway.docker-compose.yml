@@ -1,0 +1,31 @@
+version: "3"
+
+services:
+  consul:
+    container_name: consul
+    image: consul:1.15
+    ports:
+      - "8500:8500"      # GUI / API
+      - "8600:8600/udp"  # DNS Consul (optional)
+    command: agent -dev -client=0.0.0.0 # Only for development mode
+    networks:
+      - gateway
+
+  api-gateway:
+    container_name: api-gateway
+    build:
+      context: ../..
+      dockerfile: ./deployments/docker/api-gateway.dockerfile
+    environment:
+      PORT: ${API_GATEWAY_PORT}
+      GRPC_PORT: ${API_GATEWAY_GRPC_PORT}
+      GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
+      USERS_SERVICE_PATH: users-service
+    ports:
+      - ${API_GATEWAY_PORT}:${API_GATEWAY_PORT}
+    networks:
+      - gateway
+
+networks:
+  gateway:
+    driver: bridge

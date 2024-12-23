@@ -12,7 +12,5 @@ func CreateServiceClient[T any](addr string, creationFun func(cc grpc.ClientConn
 		return *new(T), nil
 	}
 
-	fmt.Printf("CONNECTION TARGET: %s", conn.Target())
-
 	return creationFun(conn), nil
 }
