@@ -26,11 +26,11 @@ func (h *Handler) Health(writer http.ResponseWriter, _ *http.Request) {
 	_, _ = writer.Write([]byte("ok"))
 }
 
-func (h *Handler) GenerateToken(ctx context.Context, request *v1.GenerateTokenRequest) (*v1.GenerateTokenResponse, error) {
+func (h *Handler) GenerateToken(_ context.Context, _ *v1.GenerateTokenRequest) (*v1.GenerateTokenResponse, error) {
 	return &v1.GenerateTokenResponse{}, nil
 }
 
-func (h *Handler) CheckToken(ctx context.Context, request *v1.CheckTokenRequest) (*v1.CheckTokenResponse, error) {
+func (h *Handler) CheckToken(_ context.Context, request *v1.CheckTokenRequest) (*v1.CheckTokenResponse, error) {
 	h.logger.Infow("Check Token", "token", request.Token, "role", request.Role, "userId", request.UserId, "self", request.Self)
 
 	return &v1.CheckTokenResponse{
