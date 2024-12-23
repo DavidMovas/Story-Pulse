@@ -43,7 +43,7 @@ services:
       - gateway
       - default
     deploy:
-      replicas: 3
+      replicas: 2
     depends_on:
       consul:
         condition: service_started

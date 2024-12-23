@@ -5,7 +5,6 @@ import (
 	"fmt"
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 	"net/http"
 	"story-pulse/internal/api-gateway/config"
 	"story-pulse/internal/api-gateway/gateway"
@@ -51,8 +50,6 @@ func NewServer(cfg *config.Config) (*Server, error) {
 			RegisterFunc: v1.RegisterUsersServiceHandler,
 		},
 	}
-
-	grpc.WithResolvers()
 
 	gt, err := gateway.NewGateway(serverCtx, sugar, muxOpts, serviceOpts...)
 	if err != nil {

@@ -14,6 +14,7 @@ import (
 type ServiceOption struct {
 	Name         string
 	RegisterFunc func(ctx context.Context, mux *gwruntime.ServeMux, conn *grpc.ClientConn) error
+	Options      []grpc.DialOption
 }
 
 type Gateway struct {
@@ -30,7 +31,10 @@ func NewGateway(ctx context.Context, logger *zap.SugaredLogger, opts []gwruntime
 	gateway.mux = mux
 
 	for _, opt := range serviceOpts {
-		conn, err := dial(fmt.Sprintf("dynamic:///%s", opt.Name), grpc.WithTransportCredentials(insecure.NewCredentials()))
+		dialOptions := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+		dialOptions = append(dialOptions, opt.Options...)
+
+		conn, err := dial(fmt.Sprintf("dynamic:///%s", opt.Name), dialOptions...)
 		if err != nil {
 			return nil, err
 		}
