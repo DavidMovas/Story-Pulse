@@ -16,7 +16,7 @@ func NewAuthenticateCredentials() *AuthenticateCredentials {
 	return &AuthenticateCredentials{}
 }
 
-func (a *AuthenticateCredentials) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
+func (a *AuthenticateCredentials) GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
 	return map[string]string{
 		"authorization": fmt.Sprintf("Bearer %s", a.token),
 	}, nil

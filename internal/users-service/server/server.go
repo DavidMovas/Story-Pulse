@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"story-pulse/internal/shared/consul"
 	v1 "story-pulse/internal/shared/grpc/v1"
+	"story-pulse/internal/shared/interceptors/authentication"
 	net2 "story-pulse/internal/shared/net"
 	"story-pulse/internal/shared/validation"
 	"story-pulse/internal/users-service/config"
@@ -49,7 +50,10 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	srv := service.NewService(repo)
 	handler := handlers.NewHandler(srv, sugar)
 
-	grpcServer := grpc.NewServer()
+	authInterceptor := authentication.NewAuthInterceptor("/v1.UsersService/", sugar, handler.GetAuthOptions())
+
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(authInterceptor.Intercept))
+
 	healthMux := http.NewServeMux()
 	healthMux.HandleFunc("/health", handler.Health)
 

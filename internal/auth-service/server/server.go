@@ -33,7 +33,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 
 	handler := handlers.NewHandler(sugar)
 
-	api := e.Group("/auth")
+	api := e.Group("/authentication")
 	api.GET("/health", handler.Health)
 
 	return &Server{

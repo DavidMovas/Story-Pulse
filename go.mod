@@ -33,6 +33,7 @@ require (
 	github.com/go-chi/chi/v5 v5.2.0 // indirect
 	github.com/go-micro/plugins v0.0.0-20240726082623-6831adfdcdc4 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.2.0 // indirect
 	github.com/hashicorp/consul/api v1.30.0 // indirect
