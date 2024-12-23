@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/consul/api"
 	"github.com/labstack/gommon/log"
+	"golang.org/x/time/rate"
 	"google.golang.org/grpc/resolver"
 	"sync"
 	"time"
@@ -37,13 +38,15 @@ func (*resolverBuilder) Scheme() string {
 }
 
 type Resolver struct {
-	consul    *api.Client
-	target    resolver.Target
-	cc        resolver.ClientConn
-	opts      resolver.BuildOptions
-	addresses []resolver.Address
-	mu        sync.Mutex
+	consul      *api.Client
+	target      resolver.Target
+	cc          resolver.ClientConn
+	opts        resolver.BuildOptions
+	currentAddr int
+	addresses   []resolver.Address
+	limiters    map[string]*rate.Limiter
 
+	mu            sync.Mutex
 	ticker        *time.Ticker
 	tickerTimeout time.Duration
 }
@@ -56,7 +59,7 @@ func (r *Resolver) ResolveNow(_ resolver.ResolveNowOptions) {
 		r.refreshAddresses()
 	}
 
-	_ = r.UpdateState(resolver.State{Addresses: r.addresses})
+	_ = r.updateState(resolver.State{Addresses: r.addresses})
 }
 
 func (r *Resolver) Close() {
@@ -78,6 +81,7 @@ func NewResolver(target resolver.Target, cc resolver.ClientConn, opts resolver.B
 	r.cc = cc
 	r.opts = opts
 	r.addresses = make([]resolver.Address, 0)
+	r.limiters = make(map[string]*rate.Limiter)
 	r.tickerTimeout = tickerTimeout
 	r.ticker = time.NewTicker(tickerTimeout)
 
@@ -100,24 +104,28 @@ func (r *Resolver) watchUpdates() {
 				addresses[i] = resolver.Address{
 					Addr: fmt.Sprintf("%s:%d", service.Service.Address, service.Service.Port),
 				}
+
+				if _, exists := r.limiters[addresses[i].Addr]; !exists {
+					r.limiters[addresses[i].Addr] = rate.NewLimiter(rate.Every(time.Second/time.Duration(10)), 5)
+				}
 			}
 
 			r.mu.Lock()
 			r.addresses = addresses
 			r.mu.Unlock()
 
-			if err = r.UpdateState(resolver.State{Addresses: addresses}); err != nil {
+			if err = r.updateState(resolver.State{Addresses: addresses}); err != nil {
 				log.Errorf("failed to update resolver state: %v", err)
 			}
 		}
 	}
 }
 
-func (r *Resolver) UpdateState(state resolver.State) error {
+func (r *Resolver) updateState(state resolver.State) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	return r.cc.UpdateState(state)
+	return r.cc.UpdateState(r.addressSelection(state))
 }
 
 func (r *Resolver) refreshAddresses() {
@@ -131,13 +139,34 @@ func (r *Resolver) refreshAddresses() {
 		addresses[i] = resolver.Address{
 			Addr: fmt.Sprintf("%s:%d", service.Service.Address, service.Service.Port),
 		}
+
+		if _, exists := r.limiters[addresses[i].Addr]; !exists {
+			r.limiters[addresses[i].Addr] = rate.NewLimiter(rate.Every(time.Second/time.Duration(10)), 5)
+		}
 	}
 
 	r.mu.Lock()
 	r.addresses = addresses
 	r.mu.Unlock()
 
-	if err = r.UpdateState(resolver.State{Addresses: addresses}); err != nil {
+	if err = r.updateState(resolver.State{Addresses: addresses}); err != nil {
 		log.Errorf("failed to update resolver state: %v", err)
 	}
+}
+
+func (r *Resolver) addressSelection(state resolver.State) resolver.State {
+	selected := r.addresses[r.currentAddr]
+	r.currentAddr = (r.currentAddr + 1) % len(r.addresses)
+
+	limiter := r.limiters[selected.Addr]
+	if limiter == nil {
+		limiter = rate.NewLimiter(rate.Every(time.Second/time.Duration(10)), 5)
+		r.limiters[selected.Addr] = limiter
+	}
+
+	if !limiter.Allow() {
+		r.addressSelection(state)
+	}
+
+	return resolver.State{Addresses: []resolver.Address{selected}}
 }

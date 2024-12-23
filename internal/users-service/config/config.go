@@ -13,5 +13,6 @@ type Config struct {
 }
 
 func (c *Config) SetDefaults() {
-	c.GRPCPort = c.GRPCPort + rand.IntN(1000)
+	c.WebPort = c.WebPort + rand.IntN(100)
+	c.GRPCPort = c.GRPCPort + rand.IntN(100)
 }

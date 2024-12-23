@@ -23,7 +23,7 @@ import (
 
 type Server struct {
 	grpcServer *grpc.Server
-	healthMux  *http.ServeMux
+	httpServer *http.Server
 	listener   net.Listener
 	logger     *zap.SugaredLogger
 	cfg        *config.Config
@@ -53,13 +53,18 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	healthMux := http.NewServeMux()
 	healthMux.HandleFunc("/health", handler.Health)
 
+	httpServer := &http.Server{
+		Addr:    fmt.Sprintf(":%d", cfg.WebPort),
+		Handler: healthMux,
+	}
+
 	v1.RegisterUsersServiceServer(grpcServer, handler)
 
 	reflection.Register(grpcServer)
 
 	return &Server{
 		grpcServer: grpcServer,
-		healthMux:  healthMux,
+		httpServer: httpServer,
 		logger:     sugar,
 		cfg:        cfg,
 		closers: []func() error{func() error {
@@ -85,27 +90,25 @@ func (s *Server) Run() (err error) {
 	}
 
 	go func() {
-		_ = http.ListenAndServe(fmt.Sprintf(":%d", s.cfg.WebPort), s.healthMux)
+		_ = s.httpServer.ListenAndServe()
 	}()
 
 	return s.grpcServer.Serve(s.listener)
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	stopped := make(chan struct{})
+	s.logger.Infow("shutting down server")
 
-	go func() {
-		s.grpcServer.GracefulStop()
-		close(stopped)
-	}()
+	err := s.httpServer.Shutdown(ctx)
+	s.grpcServer.GracefulStop()
 
 	select {
 	case <-ctx.Done():
+		_ = s.httpServer.Close()
 		s.grpcServer.Stop()
-	case <-stopped:
 	}
 
-	return withClosers(s.closers, nil)
+	return withClosers(s.closers, err)
 }
 
 func (s *Server) Port() (int, error) {
@@ -120,13 +123,13 @@ func (s *Server) register() error {
 	consulCfg := api.DefaultConfig()
 	consulCfg.Address = s.cfg.ConsulAddr
 	check := &api.AgentServiceCheck{
-		HTTP:     fmt.Sprintf("http://%s:%d/health", s.cfg.Address, s.cfg.WebPort),
-		Interval: "10s",
-		Timeout:  "2s",
+		HTTP:                           fmt.Sprintf("http://%s:%d/health", s.cfg.Address, s.cfg.WebPort),
+		Interval:                       "10s",
+		Timeout:                        "2s",
+		DeregisterCriticalServiceAfter: "30s",
 	}
 
 	consulClient, err := api.NewClient(consulCfg)
-
 	err = consul.RegisterService(consulClient, s.cfg.Name, s.cfg.Address, s.cfg.Tag, s.cfg.GRPCPort, check)
 	if err != nil {
 		return err

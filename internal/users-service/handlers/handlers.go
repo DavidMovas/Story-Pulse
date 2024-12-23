@@ -32,6 +32,8 @@ func (h *Handler) GetUserByID(ctx context.Context, request *grpc.GetUserByIDRequ
 		return nil, err
 	}
 
+	h.logger.Info("GetUserByID invoked")
+
 	return &grpc.GetUserByIDResponse{User: user.ToGRPC()}, nil
 }
 
