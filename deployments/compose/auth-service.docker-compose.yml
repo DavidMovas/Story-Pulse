@@ -14,12 +14,9 @@ services:
       CONSUL_ADDRESS: http://consul:8500
     networks:
       - gateway
-      - default
     deploy:
       replicas: 1
 
 networks:
   gateway:
-    driver: bridge
-  default:
-    driver: bridge
+    external: true
