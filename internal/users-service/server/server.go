@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"story-pulse/internal/shared/consul"
+	"story-pulse/internal/shared/grpc/client"
 	v1 "story-pulse/internal/shared/grpc/v1"
 	"story-pulse/internal/shared/interceptors/authentication"
 	net2 "story-pulse/internal/shared/net"
@@ -20,6 +21,9 @@ import (
 	"story-pulse/internal/users-service/handlers"
 	"story-pulse/internal/users-service/repository"
 	"story-pulse/internal/users-service/service"
+
+	// Init resolver
+	_ "story-pulse/internal/shared/resolver"
 )
 
 type Server struct {
@@ -50,7 +54,13 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	srv := service.NewService(repo)
 	handler := handlers.NewHandler(srv, sugar)
 
-	authInterceptor := authentication.NewAuthInterceptor("/v1.UsersService/", sugar, handler.GetAuthOptions())
+	authClient, err := client.CreateServiceClient[v1.AuthServiceClient]("auth-service", v1.NewAuthServiceClient)
+	if err != nil {
+		sugar.Errorw("Failed to create auth service", "error", err)
+		return nil, err
+	}
+
+	authInterceptor := authentication.NewAuthInterceptor(authClient, "/v1.UsersService/", sugar, handler.GetAuthOptions())
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(authInterceptor.Intercept))
 

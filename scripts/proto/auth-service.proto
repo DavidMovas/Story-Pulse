@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package authservice.v1;
+
+option go_package = "./grpc/v1";
+
+service AuthService {
+  rpc GenerateToken(GenerateTokenRequest) returns (GenerateTokenResponse);
+  rpc CheckToken(CheckTokenRequest) returns (CheckTokenResponse);
+}
+
+message GenerateTokenRequest {
+  int64 user_id = 1;
+  string role = 2;
+}
+
+message GenerateTokenResponse {
+  string token = 1;
+}
+
+message CheckTokenRequest {
+  string token = 1;
+  int64 user_id = 2;
+  string role = 3;
+}
+
+message CheckTokenResponse {
+  bool valid = 1;
+}
+

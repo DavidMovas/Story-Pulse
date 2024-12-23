@@ -7,17 +7,19 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	v1 "story-pulse/internal/shared/grpc/v1"
 	"story-pulse/internal/shared/interceptors"
 )
 
 var _ interceptors.Interceptor = (*Interceptor)(nil)
 
 type Interceptor struct {
+	client v1.AuthServiceClient
 	logger *zap.SugaredLogger
 	opts   map[string]string
 }
 
-func NewAuthInterceptor(pattern string, logger *zap.SugaredLogger, options []*AuthLevelOption) *Interceptor {
+func NewAuthInterceptor(client v1.AuthServiceClient, pattern string, logger *zap.SugaredLogger, options []*AuthLevelOption) *Interceptor {
 	var opts = make(map[string]string, len(options))
 	for _, option := range options {
 		opts[pattern+option.MethodName] = option.AuthLevel
@@ -25,7 +27,8 @@ func NewAuthInterceptor(pattern string, logger *zap.SugaredLogger, options []*Au
 	}
 
 	return &Interceptor{
-		opts: opts,
+		client: client,
+		opts:   opts,
 	}
 }
 
@@ -35,7 +38,7 @@ func NewAuthInterceptor(pattern string, logger *zap.SugaredLogger, options []*Au
 // 4. If there is token sending it to auth service
 
 func (a *Interceptor) Intercept(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
-	_, ok := a.opts[info.FullMethod]
+	level, ok := a.opts[info.FullMethod]
 	if !ok {
 		return handler(ctx, req)
 	}
@@ -48,5 +51,18 @@ func (a *Interceptor) Intercept(ctx context.Context, req any, info *grpc.UnarySe
 	tokenStr := md["authorization"][0]
 	a.logger.Infof("TOKEN %s", tokenStr)
 
-	return handler(ctx, req)
+	res, err := a.client.CheckToken(ctx, &v1.CheckTokenRequest{
+		Token: tokenStr,
+		Role:  level,
+	})
+
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "server error")
+	}
+
+	if res.Valid {
+		return handler(ctx, req)
+	}
+
+	return nil, status.Errorf(codes.PermissionDenied, "permission denied")
 }
