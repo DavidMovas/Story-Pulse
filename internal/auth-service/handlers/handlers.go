@@ -1,13 +1,18 @@
 package handlers
 
 import (
-	"github.com/labstack/echo/v4"
+	"context"
 	"go.uber.org/zap"
 	"net/http"
+	v1 "story-pulse/internal/shared/grpc/v1"
 )
+
+var _ v1.AuthServiceServer = (*Handler)(nil)
 
 type Handler struct {
 	logger *zap.SugaredLogger
+
+	v1.UnimplementedAuthServiceServer
 }
 
 func NewHandler(logger *zap.SugaredLogger) *Handler {
@@ -16,6 +21,19 @@ func NewHandler(logger *zap.SugaredLogger) *Handler {
 	}
 }
 
-func (h *Handler) Health(c echo.Context) error {
-	return c.String(http.StatusOK, "OK")
+func (h *Handler) Health(writer http.ResponseWriter, _ *http.Request) {
+	writer.WriteHeader(http.StatusOK)
+	_, _ = writer.Write([]byte("ok"))
+}
+
+func (h *Handler) GenerateToken(ctx context.Context, request *v1.GenerateTokenRequest) (*v1.GenerateTokenResponse, error) {
+	return &v1.GenerateTokenResponse{}, nil
+}
+
+func (h *Handler) CheckToken(ctx context.Context, request *v1.CheckTokenRequest) (*v1.CheckTokenResponse, error) {
+	h.logger.Infow("Check Token", "token", request.Token, "role", request.Role, "userId", request.UserId, "self", request.Self)
+
+	return &v1.CheckTokenResponse{
+		Valid: false,
+	}, nil
 }

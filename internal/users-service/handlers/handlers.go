@@ -5,7 +5,7 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 	grpc "story-pulse/internal/shared/grpc/v1"
-	auth "story-pulse/internal/shared/interceptors/authentication"
+	auth "story-pulse/internal/shared/interceptors/auth"
 	. "story-pulse/internal/users-service/models"
 	. "story-pulse/internal/users-service/service"
 )
@@ -25,8 +25,8 @@ func NewHandler(service *Service, logger *zap.SugaredLogger) *Handler {
 		service: service,
 		logger:  logger,
 		authLevelOpts: []*auth.AuthLevelOption{
-			{"GetUserByID", "user"},
-			{"CreateUser", "admin"},
+			{"GetUserByID", "user", false},
+			{"CreateUser", "admin", false},
 		},
 	}
 }

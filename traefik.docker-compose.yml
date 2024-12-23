@@ -43,18 +43,18 @@ services:
       - default
 
   auth-service:
-    container_name: authentication-service
+    container_name: auth-service
     build:
       context: .
       dockerfile: ./deployments/docker/auth-service.dockerfile
     labels:
       - traefik.enable=true
-      - traefik.http.routers.authentication-service.entrypoints=web
-      - traefik.http.routers.authentication-service.rule=PathPrefix(`/authentication-service`)
-      - traefik.http.services.authentication-service.loadbalancer.healthcheck.path=/authentication-service/health
-      - traefik.http.services.authentication-service.loadbalancer.healthcheck.interval=10s
-      - traefik.http.services.authentication-service.loadbalancer.healthcheck.timeout=3s
-      - traefik.http.services.authentication-service.loadbalancer.server.port=${AUTH_SERVICE_WEB_PORT}
+      - traefik.http.routers.auth-service.entrypoints=web
+      - traefik.http.routers.auth-service.rule=PathPrefix(`/auth-service`)
+      - traefik.http.services.auth-service.loadbalancer.healthcheck.path=/auth-service/health
+      - traefik.http.services.auth-service.loadbalancer.healthcheck.interval=10s
+      - traefik.http.services.auth-service.loadbalancer.healthcheck.timeout=3s
+      - traefik.http.services.auth-service.loadbalancer.server.port=${AUTH_SERVICE_WEB_PORT}
     environment:
       PORT: ${AUTH_SERVICE_WEB_PORT}
       GRPC_PORT: ${AUTH_SERVICE_GRPC_PORT}

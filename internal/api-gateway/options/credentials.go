@@ -21,12 +21,12 @@ func (a *AuthenticateCredentials) GetRequestMetadata(ctx context.Context, _ ...s
 		return metaMap, nil
 	}
 
-	if token := md.Get("token")[0]; token != "" {
-		metaMap["token"] = token
+	if tokens := md.Get("token"); len(tokens) > 0 {
+		metaMap["token"] = tokens[0]
 	}
 
-	if userId := md.Get("userId")[0]; userId != "" {
-		metaMap["userId"] = userId
+	if userIds := md.Get("userId"); len(userIds) > 0 {
+		metaMap["userId"] = userIds[0]
 	}
 
 	return metaMap, nil

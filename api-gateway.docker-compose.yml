@@ -6,9 +6,9 @@ services:
     container_name: consul
     image: consul:1.15
     ports:
-      - "8500:8500"      # Интерфейс Consul
-      - "8600:8600/udp"  # DNS Consul (опционально)
-    command: agent -dev -client=0.0.0.0
+      - "8500:8500"      # GUI / API
+      - "8600:8600/udp"  # DNS Consul (optional)
+    command: agent -dev -client=0.0.0.0 # Only for development mode
     networks:
       - gateway
 
@@ -49,6 +49,26 @@ services:
         condition: service_started
       users_postgres:
         condition: service_healthy
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: ./deployments/docker/auth-service.dockerfile
+    environment:
+      NAME: auth-service
+      ADDRESS: auth-service
+      PORT: ${AUTH_SERVICE_WEB_PORT}
+      GRPC_PORT: ${AUTH_SERVICE_GRPC_PORT}
+      GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
+      CONSUL_ADDRESS: http://consul:8500
+    networks:
+      - gateway
+      - default
+    deploy:
+      replicas: 1
+    depends_on:
+      consul:
+        condition: service_started
 
   users_postgres:
     container_name: users_postgres

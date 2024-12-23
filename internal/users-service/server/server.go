@@ -8,13 +8,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 	"net"
 	"net/http"
 	"story-pulse/internal/shared/consul"
 	"story-pulse/internal/shared/grpc/client"
 	v1 "story-pulse/internal/shared/grpc/v1"
-	"story-pulse/internal/shared/interceptors/authentication"
+	"story-pulse/internal/shared/interceptors/auth"
 	net2 "story-pulse/internal/shared/net"
 	"story-pulse/internal/shared/validation"
 	"story-pulse/internal/users-service/config"
@@ -23,7 +24,7 @@ import (
 	"story-pulse/internal/users-service/service"
 
 	// Init resolver
-	_ "story-pulse/internal/shared/resolver"
+	"story-pulse/internal/shared/resolver"
 )
 
 type Server struct {
@@ -54,15 +55,19 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	srv := service.NewService(repo)
 	handler := handlers.NewHandler(srv, sugar)
 
-	authClient, err := client.CreateServiceClient[v1.AuthServiceClient]("auth-service", v1.NewAuthServiceClient)
+	authClient, err := client.CreateServiceClient[v1.AuthServiceClient]("auth-service", v1.NewAuthServiceClient, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithResolvers(&resolver.Builder{}))
 	if err != nil {
 		sugar.Errorw("Failed to create auth service", "error", err)
 		return nil, err
 	}
 
-	authInterceptor := authentication.NewAuthInterceptor(authClient, "/v1.UsersService/", sugar, handler.GetAuthOptions())
+	authInterceptor := auth.NewAuthInterceptor(authClient, "/userservice.v1.UsersService/", sugar, handler.GetAuthOptions())
 
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(authInterceptor.Intercept))
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			auth.UnaryServerInterceptor(authInterceptor),
+		),
+	)
 
 	healthMux := http.NewServeMux()
 	healthMux.HandleFunc("/health", handler.Health)
@@ -73,7 +78,6 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	}
 
 	v1.RegisterUsersServiceServer(grpcServer, handler)
-
 	reflection.Register(grpcServer)
 
 	return &Server{

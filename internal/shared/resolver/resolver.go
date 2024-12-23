@@ -53,8 +53,6 @@ func NewResolver(target resolver.Target, cc resolver.ClientConn, opts resolver.B
 		return nil, err
 	}
 
-	log.Infof("NEW RESOLVER CLIENT FOR: %s", target.Endpoint())
-
 	var r Resolver
 	r.consul = client
 	r.target = target
@@ -77,8 +75,6 @@ func (r *Resolver) watchUpdates() {
 				r.ticker.Reset(r.tickerTimeout)
 				continue
 			}
-
-			log.Infof("WATCHING ADDRESSES AT: %s", time.Now().String())
 
 			var addresses = make([]resolver.Address, len(services))
 			for i, service := range services {
@@ -111,8 +107,6 @@ func (r *Resolver) refreshAddresses() {
 		log.Errorf("failed to load healty services from consul with endpoint: %s error: %v", r.target.Endpoint(), err)
 	}
 
-	log.Infof("REFRESHING ADDRESSES AT: %s", time.Now().String())
-
 	var addresses = make([]resolver.Address, len(services))
 	for i, service := range services {
 		addresses[i] = resolver.Address{
@@ -130,6 +124,12 @@ func (r *Resolver) refreshAddresses() {
 }
 
 func (r *Resolver) addressSelection() resolver.State {
+	log.Infof("RESOLVING ADDRESSES LEN: %d", len(r.addresses))
+
+	if len(r.addresses) == 1 {
+		return resolver.State{Addresses: r.addresses}
+	}
+
 	selected := r.addresses[r.currentAddr]
 	r.currentAddr = (r.currentAddr + 1) % len(r.addresses)
 
