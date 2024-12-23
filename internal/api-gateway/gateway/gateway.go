@@ -39,8 +39,6 @@ func NewGateway(ctx context.Context, logger *zap.SugaredLogger, opts []gwruntime
 			return nil, err
 		}
 
-		logger.Infof("Connection established with %s", opt.Name)
-
 		gateway.coons = append(gateway.coons, conn)
 
 		if err = opt.RegisterFunc(ctx, mux, conn); err != nil {

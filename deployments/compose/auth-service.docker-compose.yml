@@ -1,0 +1,25 @@
+version: "3"
+
+services:
+  auth-service:
+    build:
+      context: ../..
+      dockerfile: ./deployments/docker/auth-service.dockerfile
+    environment:
+      NAME: auth-service
+      ADDRESS: auth-service
+      PORT: ${AUTH_SERVICE_WEB_PORT}
+      GRPC_PORT: ${AUTH_SERVICE_GRPC_PORT}
+      GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
+      CONSUL_ADDRESS: http://consul:8500
+    networks:
+      - gateway
+      - default
+    deploy:
+      replicas: 1
+
+networks:
+  gateway:
+    driver: bridge
+  default:
+    driver: bridge

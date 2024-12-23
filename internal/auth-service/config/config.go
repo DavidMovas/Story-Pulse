@@ -1,7 +1,17 @@
 package config
 
+import (
+	"math/rand/v2"
+	"story-pulse/internal/shared/config"
+)
+
+var _ config.ServiceConfig = (*Config)(nil)
+
 type Config struct {
-	WebPort                 int `env:"PORT" envDefault:"8010"`
-	GRPCPort                int `env:"GRPC_PORT" envDefault:"8011"`
-	GracefulShutdownTimeout int `env:"GRACEFUL_TIMEOUT" envDefault:"10"`
+	config.DefaultConfig
+}
+
+func (c *Config) SetDefaults() {
+	c.WebPort = c.WebPort + rand.IntN(100)
+	c.GRPCPort = c.GRPCPort + rand.IntN(100)
 }

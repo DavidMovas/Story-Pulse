@@ -1,35 +1,9 @@
 version: "3"
 
 services:
-
-  consul:
-    container_name: consul
-    image: consul:1.15
-    ports:
-      - "8500:8500"      # GUI / API
-      - "8600:8600/udp"  # DNS Consul (optional)
-    command: agent -dev -client=0.0.0.0 # Only for development mode
-    networks:
-      - gateway
-
-  api-gateway:
-    container_name: api-gateway
-    build:
-      context: .
-      dockerfile: ./deployments/docker/api-gateway.dockerfile
-    environment:
-      PORT: ${API_GATEWAY_PORT}
-      GRPC_PORT: ${API_GATEWAY_GRPC_PORT}
-      GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
-      USERS_SERVICE_PATH: users-service
-    ports:
-      - ${API_GATEWAY_PORT}:${API_GATEWAY_PORT}
-    networks:
-      - gateway
-
   users-service:
     build:
-      context: .
+      context: ../..
       dockerfile: ./deployments/docker/users-service.dockerfile
     environment:
       NAME: users-service
@@ -41,34 +15,13 @@ services:
       DATABASE_URL: postgres://${USERS_DB_USERNAME}:${USERS_DB_PASSWORD}@users_postgres:5432/${USERS_DB_NAME}
     networks:
       - gateway
+      - users_db_net
       - default
     deploy:
       replicas: 2
     depends_on:
-      consul:
-        condition: service_started
       users_postgres:
         condition: service_healthy
-
-  auth-service:
-    build:
-      context: .
-      dockerfile: ./deployments/docker/auth-service.dockerfile
-    environment:
-      NAME: auth-service
-      ADDRESS: auth-service
-      PORT: ${AUTH_SERVICE_WEB_PORT}
-      GRPC_PORT: ${AUTH_SERVICE_GRPC_PORT}
-      GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
-      CONSUL_ADDRESS: http://consul:8500
-    networks:
-      - gateway
-      - default
-    deploy:
-      replicas: 1
-    depends_on:
-      consul:
-        condition: service_started
 
   users_postgres:
     container_name: users_postgres
@@ -82,6 +35,8 @@ services:
       - ${USERS_DB_PORT}:5432
     volumes:
       - users_db_data:/var/lib/postgresql/data
+    networks:
+      - users_db_net
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready --dbname ${USERS_DB_NAME} --username ${USERS_DB_USERNAME}" ]
       interval: 1s
@@ -89,7 +44,7 @@ services:
 
   users_migrator:
     build:
-      context: .
+      context: ../..
       dockerfile: ./deployments/docker/tern/users-tern-migrator.dockerfile
     command:
       - migrate
@@ -97,13 +52,18 @@ services:
       - postgres://${USERS_DB_USERNAME}:${USERS_DB_PASSWORD}@users_postgres:5432/${USERS_DB_NAME}
       - --migrations
       - /migrations
+    networks:
+      - users_db_net
     depends_on:
       users_postgres:
         condition: service_healthy
 
 networks:
   gateway:
+    driver: bridge
   default:
+    driver: bridge
+  users_db_net:
 
 volumes:
   users_db_data:

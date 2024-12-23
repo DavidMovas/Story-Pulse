@@ -5,6 +5,7 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 	grpc "story-pulse/internal/shared/grpc/v1"
+	auth "story-pulse/internal/shared/interceptors/auth"
 	. "story-pulse/internal/users-service/models"
 	. "story-pulse/internal/users-service/service"
 )
@@ -12,8 +13,9 @@ import (
 var _ grpc.UsersServiceServer = (*Handler)(nil)
 
 type Handler struct {
-	service *Service
-	logger  *zap.SugaredLogger
+	service       *Service
+	logger        *zap.SugaredLogger
+	authLevelOpts []*auth.AuthLevelOption
 
 	grpc.UnimplementedUsersServiceServer
 }
@@ -22,6 +24,10 @@ func NewHandler(service *Service, logger *zap.SugaredLogger) *Handler {
 	return &Handler{
 		service: service,
 		logger:  logger,
+		authLevelOpts: []*auth.AuthLevelOption{
+			{"GetUserByID", "user", false},
+			{"CreateUser", "admin", false},
+		},
 	}
 }
 
@@ -49,4 +55,8 @@ func (h *Handler) CreateUser(ctx context.Context, request *grpc.CreateUserReques
 func (h *Handler) Health(writer http.ResponseWriter, _ *http.Request) {
 	writer.WriteHeader(http.StatusOK)
 	_, _ = writer.Write([]byte("ok"))
+}
+
+func (h *Handler) GetAuthOptions() []*auth.AuthLevelOption {
+	return h.authLevelOpts
 }

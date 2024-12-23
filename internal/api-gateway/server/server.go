@@ -5,6 +5,7 @@ import (
 	"fmt"
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"net/http"
 	"story-pulse/internal/api-gateway/config"
 	"story-pulse/internal/api-gateway/gateway"
@@ -41,13 +42,19 @@ func NewServer(cfg *config.Config) (*Server, error) {
 
 	muxOpts := []gwruntime.ServeMuxOption{
 		gwruntime.WithErrorHandler(options.CustomErrorHandler),
-		gwruntime.WithMiddlewares(middlewares.NewLoggerMiddleware(sugar)),
+		gwruntime.WithMiddlewares(
+			middlewares.NewLoggerMiddleware(sugar),
+			middlewares.NewAuthMiddleware(),
+		),
 	}
 
 	serviceOpts := []*gateway.ServiceOption{
 		{
 			Name:         cfg.UsersService.ServicePath,
 			RegisterFunc: v1.RegisterUsersServiceHandler,
+			Options: []grpc.DialOption{
+				grpc.WithPerRPCCredentials(options.NewAuthenticateCredentials()),
+			},
 		},
 	}
 
