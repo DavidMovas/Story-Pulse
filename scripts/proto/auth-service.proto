@@ -20,8 +20,9 @@ message GenerateTokenResponse {
 
 message CheckTokenRequest {
   string token = 1;
-  int64 user_id = 2;
+  string user_id = 2;
   string role = 3;
+  bool self = 4;
 }
 
 message CheckTokenResponse {

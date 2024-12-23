@@ -16,14 +16,14 @@ var _ interceptors.Interceptor = (*Interceptor)(nil)
 type Interceptor struct {
 	client v1.AuthServiceClient
 	logger *zap.SugaredLogger
-	opts   map[string]string
+	opts   map[string]*AuthLevelOption
 }
 
 func NewAuthInterceptor(client v1.AuthServiceClient, pattern string, logger *zap.SugaredLogger, options []*AuthLevelOption) *Interceptor {
-	var opts = make(map[string]string, len(options))
+	var opts = make(map[string]*AuthLevelOption, len(options))
 	for _, option := range options {
-		opts[pattern+option.MethodName] = option.AuthLevel
-		logger.Infow("Added AUTH option", "method", pattern+option.MethodName, "authLevel", option.AuthLevel)
+		opts[pattern+option.MethodName] = option
+		logger.Infow("Added AUTH option", "method", pattern+option.MethodName, "authLevel", option.AuthLevel, "self", option.Self)
 	}
 
 	return &Interceptor{
@@ -38,7 +38,7 @@ func NewAuthInterceptor(client v1.AuthServiceClient, pattern string, logger *zap
 // 4. If there is token sending it to auth service
 
 func (a *Interceptor) Intercept(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
-	level, ok := a.opts[info.FullMethod]
+	opt, ok := a.opts[info.FullMethod]
 	if !ok {
 		return handler(ctx, req)
 	}
@@ -49,11 +49,16 @@ func (a *Interceptor) Intercept(ctx context.Context, req any, info *grpc.UnarySe
 	}
 
 	tokenStr := md.Get("token")[0]
+	userId := md.Get("userId")[0]
+
 	a.logger.Infof("TOKEN %s", tokenStr)
+	a.logger.Infof("USER_ID: %s", userId)
 
 	res, err := a.client.CheckToken(ctx, &v1.CheckTokenRequest{
-		Token: tokenStr,
-		Role:  level,
+		Token:  tokenStr,
+		UserId: userId,
+		Role:   opt.AuthLevel,
+		Self:   opt.Self,
 	})
 
 	if err != nil {
