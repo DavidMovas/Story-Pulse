@@ -54,7 +54,6 @@ users-up:
 users-down:
 	docker-compose -f ./deployments/compose/users-service.docker-compose.yml --env-file=./.env down
 
-
 # Protobuf generate commands
 GRPC_VERSION := "v1"
 
