@@ -9,7 +9,6 @@ import (
 	"net"
 	"story-pulse/internal/content-service/config"
 	"story-pulse/internal/content-service/handlers"
-	"time"
 )
 
 type Server struct {
@@ -34,10 +33,8 @@ func NewServer(cfg *config.Config) (*Server, error) {
 
 	handler := handlers.NewHandler(sugar)
 
-	e.GET("/health", handler.Health)
-
 	api := e.Group("/content-service")
-	api.GET("/test", handler.Test)
+	api.GET("/health", handler.Health)
 
 	return &Server{
 		e:      e,
@@ -53,9 +50,7 @@ func (s *Server) Run() error {
 	return s.e.Start(fmt.Sprintf(":%d", port))
 }
 
-func (s *Server) Stop() error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.cfg.GracefulShutdownTimeout)*time.Second)
-	defer cancel()
+func (s *Server) Stop(ctx context.Context) error {
 	return s.e.Shutdown(ctx)
 }
 
