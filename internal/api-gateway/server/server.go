@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
-	gwruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"net/http"
@@ -12,7 +12,9 @@ import (
 	"story-pulse/internal/api-gateway/handlers"
 	"story-pulse/internal/api-gateway/middlewares"
 	"story-pulse/internal/api-gateway/options"
-	_ "story-pulse/internal/api-gateway/resolver"
+	interceptors "story-pulse/internal/shared/interceptors/gateway"
+
+	//_ "story-pulse/internal/api-gateway/resolver"
 	v1 "story-pulse/internal/shared/grpc/v1"
 )
 
@@ -40,11 +42,10 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	handler := handlers.NewHandler(sugar)
 	mux.HandleFunc("/health", handler.Health)
 
-	muxOpts := []gwruntime.ServeMuxOption{
-		gwruntime.WithErrorHandler(options.CustomErrorHandler),
-		gwruntime.WithMiddlewares(
+	muxOpts := []runtime.ServeMuxOption{
+		runtime.WithErrorHandler(options.CustomErrorHandler),
+		runtime.WithMiddlewares(
 			middlewares.NewLoggerMiddleware(sugar),
-			middlewares.NewAuthMiddleware(),
 		),
 	}
 
@@ -52,13 +53,28 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		{
 			Name:         cfg.UsersService.ServicePath,
 			RegisterFunc: v1.RegisterUsersServiceHandler,
-			Options: []grpc.DialOption{
+			MuxOptions: []runtime.ServeMuxOption{
+				runtime.WithMiddlewares(
+					middlewares.NewAuthMiddleware(),
+				),
+			},
+			DialOptions: []grpc.DialOption{
 				grpc.WithPerRPCCredentials(options.NewAuthenticateCredentials()),
+			},
+		},
+		{
+			Name:         cfg.AuthService.ServicePath,
+			RegisterFunc: v1.RegisterAuthServiceHandler,
+			MuxOptions: []runtime.ServeMuxOption{
+				runtime.WithMiddlewares(middlewares.NewCookieMiddleware()),
+			},
+			DialOptions: []grpc.DialOption{
+				grpc.WithUnaryInterceptor(interceptors.UnaryCookieGatewayInterceptor),
 			},
 		},
 	}
 
-	gt, err := gateway.NewGateway(serverCtx, sugar, muxOpts, serviceOpts...)
+	gt, err := gateway.NewGateway(serverCtx, mux, sugar, muxOpts, serviceOpts...)
 	if err != nil {
 		cancel()
 		return nil, err
