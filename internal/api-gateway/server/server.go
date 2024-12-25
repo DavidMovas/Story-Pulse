@@ -14,7 +14,7 @@ import (
 	"story-pulse/internal/api-gateway/options"
 	interceptors "story-pulse/internal/shared/interceptors/gateway"
 
-	//_ "story-pulse/internal/api-gateway/resolver"
+	_ "story-pulse/internal/api-gateway/resolver"
 	v1 "story-pulse/internal/shared/grpc/v1"
 )
 
@@ -52,11 +52,13 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	serviceOpts := []*gateway.ServiceOption{
 		{
 			Name:         cfg.UsersService.ServicePath,
+			Prefix:       "users",
 			RegisterFunc: v1.RegisterUsersServiceHandler,
-			MuxOptions: []runtime.ServeMuxOption{
-				runtime.WithMiddlewares(
-					middlewares.NewAuthMiddleware(),
-				),
+			Wrappers: []*gateway.Wrapper{
+				{
+					Path: "/users",
+					Func: middlewares.AuthHTTPMiddleware,
+				},
 			},
 			DialOptions: []grpc.DialOption{
 				grpc.WithPerRPCCredentials(options.NewAuthenticateCredentials()),
@@ -64,10 +66,8 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		},
 		{
 			Name:         cfg.AuthService.ServicePath,
+			Prefix:       "/auth",
 			RegisterFunc: v1.RegisterAuthServiceHandler,
-			MuxOptions: []runtime.ServeMuxOption{
-				runtime.WithMiddlewares(middlewares.NewCookieMiddleware()),
-			},
 			DialOptions: []grpc.DialOption{
 				grpc.WithUnaryInterceptor(interceptors.UnaryCookieGatewayInterceptor),
 			},
@@ -79,8 +79,6 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		cancel()
 		return nil, err
 	}
-
-	mux.Handle("/", gt.Proxy())
 
 	return &Server{
 		gateway: gt,

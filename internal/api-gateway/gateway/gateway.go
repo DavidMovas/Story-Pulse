@@ -9,29 +9,33 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"net/http"
-	"story-pulse/internal/shared/resolver"
 )
 
 type ServiceOption struct {
 	Name         string
-	MuxOptions   []runtime.ServeMuxOption
+	Prefix       string
+	Wrappers     []*Wrapper
 	RegisterFunc func(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error
 	DialOptions  []grpc.DialOption
 }
 
+type Wrapper struct {
+	Path string
+	Func func(http.Handler) http.Handler
+}
+
 type Gateway struct {
-	mux    *http.ServeMux
 	logger *zap.SugaredLogger
 	coons  []*grpc.ClientConn
 }
 
-func NewGateway(ctx context.Context, httpMux *http.ServeMux, logger *zap.SugaredLogger, globalMuxOptions []runtime.ServeMuxOption, serviceOpts ...*ServiceOption) (*Gateway, error) {
+func NewGateway(ctx context.Context, httpMux *http.ServeMux, logger *zap.SugaredLogger, grpcMuxOptions []runtime.ServeMuxOption, serviceOpts ...*ServiceOption) (*Gateway, error) {
 	var gateway Gateway
 	gateway.logger = logger
-	gateway.mux = httpMux
+	grpcMux := runtime.NewServeMux(grpcMuxOptions...)
 
 	for _, srvOpt := range serviceOpts {
-		dialOptions := []grpc.DialOption{grpc.WithResolvers(&resolver.Builder{}), grpc.WithTransportCredentials(insecure.NewCredentials())}
+		dialOptions := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 		dialOptions = append(dialOptions, srvOpt.DialOptions...)
 
 		conn, err := dial(fmt.Sprintf("dynamic:///%s", srvOpt.Name), dialOptions...)
@@ -41,23 +45,22 @@ func NewGateway(ctx context.Context, httpMux *http.ServeMux, logger *zap.Sugared
 
 		gateway.coons = append(gateway.coons, conn)
 
-		var options []runtime.ServeMuxOption
-		options = append(options, globalMuxOptions...)
-		options = append(options, srvOpt.MuxOptions...)
-
-		mux := runtime.NewServeMux(options...)
-		if err = srvOpt.RegisterFunc(ctx, mux, conn); err != nil {
+		if err = srvOpt.RegisterFunc(ctx, grpcMux, conn); err != nil {
 			return nil, err
 		}
 
-		httpMux.Handle("/", mux)
+		for _, wrapper := range srvOpt.Wrappers {
+			var wrapped http.Handler = grpcMux
+
+			if wrapper.Func != nil {
+				wrapped = wrapper.Func(grpcMux)
+			}
+
+			httpMux.Handle(fmt.Sprintf("%s%s", srvOpt.Prefix, wrapper.Path), wrapped)
+		}
 	}
 
 	return &gateway, nil
-}
-
-func (g *Gateway) Proxy() http.Handler {
-	return g.mux
 }
 
 func (g *Gateway) Close() error {
