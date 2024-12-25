@@ -4,9 +4,17 @@ package authservice.v1;
 
 option go_package = "./grpc/v1";
 
+import "google/api/annotations.proto";
+
 service AuthService {
   rpc GenerateToken(GenerateTokenRequest) returns (GenerateTokenResponse);
   rpc CheckToken(CheckTokenRequest) returns (CheckTokenResponse);
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
+    option (google.api.http) = {
+      post: "/refresh",
+      body: "*",
+    };
+  }
 }
 
 message GenerateTokenRequest {
@@ -27,5 +35,13 @@ message CheckTokenRequest {
 
 message CheckTokenResponse {
   bool valid = 1;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  string access_token = 1;
 }
 
