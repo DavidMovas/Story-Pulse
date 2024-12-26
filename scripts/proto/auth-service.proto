@@ -5,6 +5,7 @@ package authservice.v1;
 option go_package = "./grpc/v1";
 
 import "google/api/annotations.proto";
+import "google/protobuf/descriptor.proto";
 import "common.proto";
 
 service AuthService {
@@ -32,10 +33,8 @@ service AuthService {
 
 message RegisterRequest {
   string email = 1;
-  oneof payload {
-    string password = 2;
-    string username = 3;
-  }
+  string username = 2;
+  string password = 3;
 }
 
 message RegisterResponse {
@@ -45,11 +44,9 @@ message RegisterResponse {
 }
 
 message LoginRequest {
-  string email = 1;
-  oneof payload {
-    string password = 2;
-    string username = 3;
-  }
+  optional string email = 1;
+  optional string username = 2;
+  string password = 3;
 }
 
 message LoginResponse {

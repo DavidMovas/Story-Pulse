@@ -74,16 +74,6 @@ func (r *Repository) CreateUser(ctx context.Context, user *UserWithPassword) (*U
 		Values(user.Email, user.PasswordHash, user.Username).
 		Suffix("RETURNING id, role, created_at")
 
-	if user.AvatarURL != nil {
-		builder.Columns("avatar_url").Values(*user.AvatarURL)
-	}
-	if user.FullName != nil {
-		builder.Columns("full_name").Values(*user.FullName)
-	}
-	if user.Bio != nil {
-		builder.Columns("bio").Values(*user.Bio)
-	}
-
 	query, args, err := builder.ToSql()
 	if err != nil {
 		return nil, err

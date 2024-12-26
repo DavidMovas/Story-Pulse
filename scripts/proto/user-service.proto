@@ -27,10 +27,8 @@ message GetUserByIDResponse {
 
 message CreateUserRequest {
   string email = 1;
-  oneof payload {
-    string password = 2;
-    string username = 3;
-  }
+  string password = 2;
+  string username = 3;
 }
 
 message CreateUserResponse {

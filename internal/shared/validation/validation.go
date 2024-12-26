@@ -3,15 +3,20 @@ package validation
 import (
 	"fmt"
 	"net/mail"
-	"story-pulse/contracts"
 	"strings"
+)
 
-	"gopkg.in/validator.v2"
+type Type string
+
+const (
+	Email    = "email"
+	Username = "username"
+	Password = "password"
 )
 
 var (
-	passwordMinLength       = 8
 	emailMaxLength          = 127
+	passwordMinLength       = 8
 	usernameMinLength       = 3
 	passwordSpecialChars    = "!#$%&'*+/=?^_`{|}~@"
 	passwordRequiredEntries = []struct {
@@ -25,143 +30,73 @@ var (
 	}
 )
 
-func SetupValidators() {
-	validators := []struct {
-		name string
-		fn   validator.ValidationFunc
-	}{
-		{"required", required},
-		{"email", email},
-		{"password", password},
-		{"passwordOptional", passwordOptional},
-		{"username", username},
-		{"usernameOptional", usernameOptional},
-		{"role", role},
+func Validate(validType string, value any, required bool) error {
+	s, ok := value.(string)
+	if !ok && required {
+		return fmt.Errorf("%s is required", validType)
 	}
-
-	for _, v := range validators {
-		_ = validator.SetValidationFunc(v.name, v.fn)
-	}
-}
-
-func username(v interface{}, _ string) error {
-	s, ok := v.(string)
 
 	if !ok {
-		return fmt.Errorf("username must be a string")
+		return fmt.Errorf("%s is %s", validType, value)
 	}
 
-	if len(s) < usernameMinLength {
-		return fmt.Errorf("username must be at least %d characters long", usernameMinLength)
+	switch validType {
+	case Email:
+		return validateEmail(s, required)
+	case Username:
+		return validateUsername(s, required)
+	case Password:
+		return validatePassword(s, required)
+	default:
+		return nil
 	}
-
-	return nil
 }
 
-func usernameOptional(v interface{}, _ string) error {
-	s, ok := v.(string)
-	ps, psOk := v.(*string)
-
-	if !ok && ps == nil {
+func validateEmail(email string, required bool) error {
+	if required && email == "" {
+		return fmt.Errorf("email is required")
+	} else if !required && email == "" {
 		return nil
 	}
 
-	if psOk {
-		s = *ps
-		ok = true
+	if len(email) > emailMaxLength {
+		return fmt.Errorf("email is too long")
 	}
 
-	if !ok {
-		return fmt.Errorf("username must be a string")
-	}
-
-	if len(s) < usernameMinLength {
-		return fmt.Errorf("username must be at least %d characters long", usernameMinLength)
-	}
-
-	return nil
-}
-
-func password(v interface{}, _ string) error {
-	s, ok := v.(string)
-
-	if !ok {
-		return fmt.Errorf("password must be a string")
-	}
-
-	if len(s) < passwordMinLength {
-		return fmt.Errorf("password must be at least %d characters long", passwordMinLength)
-	}
-
-	for _, entry := range passwordRequiredEntries {
-		if !strings.ContainsAny(s, entry.chars) {
-			return fmt.Errorf("password must contain at least one of the following required entries: %s", entry.name)
-		}
-	}
-
-	return nil
-}
-
-func passwordOptional(v interface{}, _ string) error {
-	s, ok := v.(string)
-	ps, psOk := v.(*string)
-
-	if !ok && ps == nil {
-		return nil
-	}
-
-	if psOk {
-		s = *ps
-		ok = true
-	}
-
-	if !ok {
-		return fmt.Errorf("password must be a string")
-	}
-
-	if len(s) < passwordMinLength {
-		return fmt.Errorf("password must be at least %d characters long", passwordMinLength)
-	}
-
-	for _, entry := range passwordRequiredEntries {
-		if !strings.ContainsAny(s, entry.chars) {
-			return fmt.Errorf("password must contain at least one of the following required entries: %s", entry.name)
-		}
-	}
-
-	return nil
-}
-
-func email(v interface{}, _ string) error {
-	s, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("email must be a string")
-	}
-
-	if len(s) > emailMaxLength {
-		return fmt.Errorf("email must be at most %d characters long", emailMaxLength)
-	}
-
-	_, err := mail.ParseAddress(s)
+	_, err := mail.ParseAddress(email)
 	return err
 }
 
-func required(v interface{}, _ string) error {
-	s, ok := v.(string)
-	if ok && s == "" {
-		return fmt.Errorf("must not be empty")
+func validateUsername(username string, required bool) error {
+	if required && username == "" {
+		return fmt.Errorf("username is required")
+	} else if !required && username == "" {
+		return nil
 	}
+
+	if len(username) < usernameMinLength {
+		return fmt.Errorf("username too short")
+	}
+
 	return nil
 }
 
-func role(v interface{}, _ string) error {
-	s, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("role must be a string")
+func validatePassword(password string, required bool) error {
+	if required && password == "" {
+		return fmt.Errorf("password is required")
+	} else if !required && password == "" {
+		return nil
 	}
 
-	if !contracts.ValidateRole(contracts.Role(s)) {
-		return fmt.Errorf("invalid role")
+	if len(password) < passwordMinLength {
+		return fmt.Errorf("password too short")
 	}
+
+	for _, entry := range passwordRequiredEntries {
+		if !strings.ContainsAny(password, entry.chars) {
+			return fmt.Errorf("password must contain at least one of the following required entries: %s", entry.name)
+		}
+	}
+
 	return nil
 }

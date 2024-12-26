@@ -5,29 +5,36 @@ import (
 	"errors"
 	"fmt"
 	"github.com/hashicorp/consul/api"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 	"net"
 	"net/http"
 	"story-pulse/internal/auth-service/config"
 	"story-pulse/internal/auth-service/handlers"
+	"story-pulse/internal/auth-service/repository"
+	srv "story-pulse/internal/auth-service/service"
 	"story-pulse/internal/shared/consul"
+	"story-pulse/internal/shared/grpc/client"
 	v1 "story-pulse/internal/shared/grpc/v1"
 	net2 "story-pulse/internal/shared/net"
+	"story-pulse/internal/shared/resolver"
 )
 
 type Server struct {
 	grpcServer *grpc.Server
 	httpServer *http.Server
 	listener   net.Listener
+	rdb        *redis.Client
 	logger     *zap.SugaredLogger
 	cfg        *config.Config
 
 	closers []func() error
 }
 
-func NewServer(_ context.Context, cfg *config.Config) (*Server, error) {
+func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	logger, _ := zap.NewProduction()
 	defer func() {
 		_ = logger.Sync()
@@ -35,7 +42,28 @@ func NewServer(_ context.Context, cfg *config.Config) (*Server, error) {
 
 	sugar := logger.Sugar().WithOptions(zap.WithCaller(false))
 
-	handler := handlers.NewHandler(sugar)
+	usersClient, err := client.CreateServiceClient[v1.UsersServiceClient](
+		"users-service",
+		v1.NewUsersServiceClient,
+		grpc.WithTransportCredentials(
+			insecure.NewCredentials(),
+		),
+		grpc.WithResolvers(&resolver.Builder{}),
+	)
+	if err != nil {
+		sugar.Errorw("Failed to create users service", "error", err)
+		return nil, err
+	}
+
+	rdb, err := connectDB(ctx, cfg)
+	if err != nil {
+		sugar.Errorw("Failed to connect to database", "error", err)
+		return nil, err
+	}
+
+	repo := repository.NewRepository(rdb)
+	service := srv.NewService(usersClient, repo, sugar, cfg)
+	handler := handlers.NewHandler(service, sugar)
 
 	grpcServer := grpc.NewServer()
 
@@ -53,6 +81,7 @@ func NewServer(_ context.Context, cfg *config.Config) (*Server, error) {
 	return &Server{
 		grpcServer: grpcServer,
 		httpServer: httpServer,
+		rdb:        rdb,
 		logger:     sugar,
 		cfg:        cfg,
 	}, nil
@@ -67,7 +96,7 @@ func (s *Server) Run() (err error) {
 	s.logger.Infof("starting server http port %d", s.cfg.WebPort)
 	s.logger.Infof("starting server tcp port %d", s.cfg.GRPCPort)
 
-	s.closers = append(s.closers, s.listener.Close)
+	s.closers = append(s.closers, s.listener.Close, s.rdb.Close)
 
 	if err = s.register(); err != nil {
 		return err
@@ -121,6 +150,18 @@ func (s *Server) register() error {
 
 	s.logger.Infow("Service registered in Consul", "Name", s.cfg.Name, "Address", s.cfg.Address, "Tag", s.cfg.Tag)
 	return nil
+}
+
+func connectDB(ctx context.Context, cfg *config.Config) (*redis.Client, error) {
+	rdb := redis.NewClient(&redis.Options{
+		Addr: cfg.RedisURL,
+	})
+
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		return nil, err
+	}
+
+	return rdb, nil
 }
 
 func withClosers(closers []func() error, err error) error {

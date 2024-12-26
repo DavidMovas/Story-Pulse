@@ -22,11 +22,8 @@ func (u *User) ToGRPC() *grpc.User {
 func ToUserWithPassword(r *grpc.CreateUserRequest) *UserWithPassword {
 	return &UserWithPassword{
 		User: &User{
-			Email:     r.Email,
-			Username:  r.Username,
-			FullName:  r.FullName,
-			AvatarURL: r.AvatarUrl,
-			Bio:       r.Bio,
+			Email:    r.Email,
+			Username: r.Username,
 		},
 		PasswordHash: r.Password,
 	}
