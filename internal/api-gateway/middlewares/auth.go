@@ -1,12 +1,14 @@
 package middlewares
 
 import (
+	"fmt"
 	"google.golang.org/grpc/metadata"
 	"net/http"
 )
 
 func AuthHTTPMiddleware(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("AUTH MIDDLEWARE !")
 		token := r.Header.Get("Authorization")
 		userId := r.URL.Query().Get("userId")
 

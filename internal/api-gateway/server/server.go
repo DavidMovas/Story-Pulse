@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -20,7 +21,7 @@ import (
 
 type Server struct {
 	gateway *gateway.Gateway
-	mux     *http.ServeMux
+	mux     *chi.Mux
 	logger  *zap.SugaredLogger
 	cfg     *config.Config
 
@@ -36,37 +37,28 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	}()
 
 	sugar := logger.Sugar().WithOptions(zap.WithCaller(false))
+	grpcMuxOpts := []runtime.ServeMuxOption{runtime.WithErrorHandler(options.CustomErrorHandler)}
 
-	mux := http.NewServeMux()
+	// GRPC Mux
+	grpcMux := runtime.NewServeMux(grpcMuxOpts...)
+
+	// HTTP Mux
+	httpMux := chi.NewMux()
+	httpMux.Use(middlewares.NewLoggerMiddleware(sugar))
 
 	handler := handlers.NewHandler(sugar)
-	mux.HandleFunc("/health", handler.Health)
-
-	muxOpts := []runtime.ServeMuxOption{
-		runtime.WithErrorHandler(options.CustomErrorHandler),
-		runtime.WithMiddlewares(
-			middlewares.NewLoggerMiddleware(sugar),
-		),
-	}
+	httpMux.HandleFunc("/health", handler.Health)
 
 	serviceOpts := []*gateway.ServiceOption{
 		{
 			Name:         cfg.UsersService.ServicePath,
-			Prefix:       "users",
 			RegisterFunc: v1.RegisterUsersServiceHandler,
-			Wrappers: []*gateway.Wrapper{
-				{
-					Path: "/users",
-					Func: middlewares.AuthHTTPMiddleware,
-				},
-			},
 			DialOptions: []grpc.DialOption{
 				grpc.WithPerRPCCredentials(options.NewAuthenticateCredentials()),
 			},
 		},
 		{
 			Name:         cfg.AuthService.ServicePath,
-			Prefix:       "/auth",
 			RegisterFunc: v1.RegisterAuthServiceHandler,
 			DialOptions: []grpc.DialOption{
 				grpc.WithUnaryInterceptor(interceptors.UnaryCookieGatewayInterceptor),
@@ -74,7 +66,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		},
 	}
 
-	gt, err := gateway.NewGateway(serverCtx, mux, sugar, muxOpts, serviceOpts...)
+	gt, err := gateway.NewGateway(serverCtx, grpcMux, sugar, serviceOpts...)
 	if err != nil {
 		cancel()
 		return nil, err
@@ -82,7 +74,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 
 	return &Server{
 		gateway: gt,
-		mux:     mux,
+		mux:     httpMux,
 		ctx:     serverCtx,
 		logger:  sugar,
 		cfg:     cfg,

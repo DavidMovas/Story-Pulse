@@ -13,8 +13,6 @@ import (
 
 type ServiceOption struct {
 	Name         string
-	Prefix       string
-	Wrappers     []*Wrapper
 	RegisterFunc func(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error
 	DialOptions  []grpc.DialOption
 }
@@ -29,10 +27,9 @@ type Gateway struct {
 	coons  []*grpc.ClientConn
 }
 
-func NewGateway(ctx context.Context, httpMux *http.ServeMux, logger *zap.SugaredLogger, grpcMuxOptions []runtime.ServeMuxOption, serviceOpts ...*ServiceOption) (*Gateway, error) {
+func NewGateway(ctx context.Context, grpcMux *runtime.ServeMux, logger *zap.SugaredLogger, serviceOpts ...*ServiceOption) (*Gateway, error) {
 	var gateway Gateway
 	gateway.logger = logger
-	grpcMux := runtime.NewServeMux(grpcMuxOptions...)
 
 	for _, srvOpt := range serviceOpts {
 		dialOptions := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
@@ -47,16 +44,6 @@ func NewGateway(ctx context.Context, httpMux *http.ServeMux, logger *zap.Sugared
 
 		if err = srvOpt.RegisterFunc(ctx, grpcMux, conn); err != nil {
 			return nil, err
-		}
-
-		for _, wrapper := range srvOpt.Wrappers {
-			var wrapped http.Handler = grpcMux
-
-			if wrapper.Func != nil {
-				wrapped = wrapper.Func(grpcMux)
-			}
-
-			httpMux.Handle(fmt.Sprintf("%s%s", srvOpt.Prefix, wrapper.Path), wrapped)
 		}
 	}
 
