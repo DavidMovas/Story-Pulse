@@ -3,24 +3,28 @@ package middlewares
 import (
 	"context"
 	"errors"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"net/http"
 )
 
-func NewCookieMiddleware() runtime.Middleware {
-	return func(next runtime.HandlerFunc) runtime.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+func RequiredCookieMiddleware() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			cookie, err := r.Cookie("refresh_token")
 			if err != nil && errors.Is(err, http.ErrNoCookie) {
-				next(w, r, pathParams)
+				w.WriteHeader(http.StatusUnauthorized)
+				_, _ = w.Write([]byte("Unauthorized"))
+				return
 			}
 
-			ctx := r.Context()
-			if cookie != nil && cookie.Value != "" {
-				ctx = context.WithValue(ctx, "refresh_token", cookie.Value)
+			if cookie == nil || cookie.Value == "" {
+				w.WriteHeader(http.StatusUnauthorized)
+				_, _ = w.Write([]byte("Unauthorized"))
+				return
 			}
 
-			next(w, r.WithContext(ctx), pathParams)
-		}
+			ctx := context.WithValue(r.Context(), "refresh_token", cookie.Value)
+
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
 	}
 }

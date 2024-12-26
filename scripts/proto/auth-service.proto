@@ -11,7 +11,7 @@ service AuthService {
   rpc CheckToken(CheckTokenRequest) returns (CheckTokenResponse);
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
     option (google.api.http) = {
-      post: "/refresh",
+      post: "/refresh/v1",
       body: "*",
     };
   }

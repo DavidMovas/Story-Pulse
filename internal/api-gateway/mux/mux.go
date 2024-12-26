@@ -1,0 +1,30 @@
+package mux
+
+import (
+	"github.com/go-chi/chi/v5"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"story-pulse/internal/api-gateway/middlewares"
+)
+
+const (
+	usersApiPrefix = "/users/v1"
+	authApiPrefix  = "/auth/v1"
+)
+
+func Register(httpMux *chi.Mux, grpcMux *runtime.ServeMux) {
+	httpMux.Route(authApiPrefix, func(r chi.Router) {
+		r.With(middlewares.RequiredCookieMiddleware()).Route("/refresh", func(r chi.Router) {
+			r.Mount("/", grpcMux)
+		})
+
+		r.Mount("/", grpcMux)
+	})
+
+	httpMux.Route(usersApiPrefix, func(r chi.Router) {
+		r.With(middlewares.AuthAndIDMiddleware()).Route("/{id}", func(r chi.Router) {
+			r.Mount("/", grpcMux)
+		})
+
+		r.Mount("/", grpcMux)
+	})
+}

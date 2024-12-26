@@ -12,6 +12,7 @@ import (
 	"story-pulse/internal/api-gateway/gateway"
 	"story-pulse/internal/api-gateway/handlers"
 	"story-pulse/internal/api-gateway/middlewares"
+	"story-pulse/internal/api-gateway/mux"
 	"story-pulse/internal/api-gateway/options"
 	interceptors "story-pulse/internal/shared/interceptors/gateway"
 
@@ -45,6 +46,9 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	// HTTP Mux
 	httpMux := chi.NewMux()
 	httpMux.Use(middlewares.NewLoggerMiddleware(sugar))
+
+	// Register middlewares and routes
+	mux.Register(httpMux, grpcMux)
 
 	handler := handlers.NewHandler(sugar)
 	httpMux.HandleFunc("/health", handler.Health)
