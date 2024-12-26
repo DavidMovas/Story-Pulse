@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package common.v1;
+
+option go_package = "./grpc/v1";
+
+import "google/protobuf/timestamp.proto";
+
+message User {
+  int64 id = 1;
+  string email = 2;
+  optional string avatar_url = 3;
+  string username = 4;
+  optional string full_name = 5;
+  optional string bio = 6;
+  optional google.protobuf.Timestamp last_login_at = 7;
+  string role = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
