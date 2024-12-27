@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	usersApiPrefix = "/users/v1"
-	authApiPrefix  = "/auth/v1"
+	usersApiPrefix = "/v1/users"
+	authApiPrefix  = "/v1/auth"
 )
 
 func Register(httpMux *chi.Mux, grpcMux *runtime.ServeMux) {

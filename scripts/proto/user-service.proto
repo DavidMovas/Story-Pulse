@@ -10,7 +10,7 @@ import "common.proto";
 service UsersService {
   rpc GetUserByID(GetUserByIDRequest) returns (GetUserByIDResponse) {
     option (google.api.http) = {
-      get: "/users/v1/{id}"
+      get: "/v1/users/{id}"
     };
   }
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"github.com/labstack/gommon/log"
 	"google.golang.org/grpc/metadata"
 	"net/http"
 )
@@ -37,6 +38,8 @@ func RefreshTokenToCookieMiddleware() func(http.Handler) http.Handler {
 			res := &responseRecorder{ResponseWriter: w, body: &bytes.Buffer{}}
 			next.ServeHTTP(res, r)
 
+			log.Info("INVOKE 2 !!!")
+
 			if res.statusCode == http.StatusOK {
 				var resp map[string]interface{}
 				if err := json.Unmarshal(res.body.Bytes(), &resp); err != nil {
@@ -51,7 +54,6 @@ func RefreshTokenToCookieMiddleware() func(http.Handler) http.Handler {
 				}
 			}
 
-			w.WriteHeader(res.statusCode)
 			_, _ = w.Write(res.body.Bytes())
 		})
 	}

@@ -29,6 +29,8 @@ func NewHandler(service *service.Service, logger *zap.SugaredLogger) *Handler {
 }
 
 func (h *Handler) RegisterUser(ctx context.Context, request *v1.RegisterRequest) (*v1.RegisterResponse, error) {
+	h.logger.Info("Register User Called...")
+
 	if request.Email == "" && request.Username == "" {
 		return nil, status.Error(codes.InvalidArgument, "email and username required")
 	}
@@ -62,6 +64,8 @@ func (h *Handler) RegisterUser(ctx context.Context, request *v1.RegisterRequest)
 }
 
 func (h *Handler) LoginUser(ctx context.Context, request *v1.LoginRequest) (*v1.LoginResponse, error) {
+	h.logger.Info("Login User Called...")
+
 	if request.Email == nil && request.Username == nil {
 		return nil, status.Error(codes.InvalidArgument, "email or username required")
 	}
