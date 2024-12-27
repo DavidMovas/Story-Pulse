@@ -14,7 +14,6 @@ import (
 	"story-pulse/internal/api-gateway/middlewares"
 	"story-pulse/internal/api-gateway/mux"
 	"story-pulse/internal/api-gateway/options"
-	_ "story-pulse/internal/api-gateway/resolver"
 	v1 "story-pulse/internal/shared/grpc/v1"
 )
 
@@ -62,7 +61,6 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		{
 			Name:         cfg.AuthService.ServicePath,
 			RegisterFunc: v1.RegisterAuthServiceHandler,
-			DialOptions:  []grpc.DialOption{},
 		},
 	}
 

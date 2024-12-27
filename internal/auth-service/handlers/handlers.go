@@ -29,8 +29,6 @@ func NewHandler(service *service.Service, logger *zap.SugaredLogger) *Handler {
 }
 
 func (h *Handler) RegisterUser(ctx context.Context, request *v1.RegisterRequest) (*v1.RegisterResponse, error) {
-	h.logger.Info("Register User Called...")
-
 	if request.Email == "" && request.Username == "" {
 		return nil, status.Error(codes.InvalidArgument, "email and username required")
 	}
@@ -56,16 +54,15 @@ func (h *Handler) RegisterUser(ctx context.Context, request *v1.RegisterRequest)
 		return nil, err
 	}
 
+	ctx = context.WithValue(ctx, "refresh_token", res.RefreshToken)
+
 	return &v1.RegisterResponse{
-		User:         res.User,
-		AccessToken:  res.AccessToken,
-		RefreshToken: res.RefreshToken,
+		User:        res.User,
+		AccessToken: res.AccessToken,
 	}, nil
 }
 
 func (h *Handler) LoginUser(ctx context.Context, request *v1.LoginRequest) (*v1.LoginResponse, error) {
-	h.logger.Info("Login User Called...")
-
 	if request.Email == nil && request.Username == nil {
 		return nil, status.Error(codes.InvalidArgument, "email or username required")
 	}
@@ -86,8 +83,6 @@ func (h *Handler) LoginUser(ctx context.Context, request *v1.LoginRequest) (*v1.
 }
 
 func (h *Handler) RefreshToken(ctx context.Context, request *v1.RefreshTokenRequest) (*v1.RefreshTokenResponse, error) {
-	h.logger.Info("RefreshToken called")
-
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "metadata is not provided")

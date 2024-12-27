@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"net/http"
+	"story-pulse/internal/shared/resolver"
 )
 
 type ServiceOption struct {
@@ -32,7 +33,7 @@ func NewGateway(ctx context.Context, grpcMux *runtime.ServeMux, logger *zap.Suga
 	gateway.logger = logger
 
 	for _, srvOpt := range serviceOpts {
-		dialOptions := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+		dialOptions := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithResolvers(&resolver.Builder{})}
 		dialOptions = append(dialOptions, srvOpt.DialOptions...)
 
 		conn, err := dial(fmt.Sprintf("dynamic:///%s", srvOpt.Name), dialOptions...)

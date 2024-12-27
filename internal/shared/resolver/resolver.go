@@ -109,8 +109,6 @@ func (r *Resolver) refreshAddresses() {
 
 	var addresses = make([]resolver.Address, len(services))
 	for i, service := range services {
-		fmt.Printf("RESERVER: %s\t%d\n", service.Service.Address, service.Service.Port)
-
 		addresses[i] = resolver.Address{
 			Addr: fmt.Sprintf("%s:%d", service.Service.Address, service.Service.Port),
 		}

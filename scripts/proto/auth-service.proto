@@ -11,21 +11,21 @@ import "common.proto";
 service AuthService {
   rpc RegisterUser(RegisterRequest) returns (RegisterResponse) {
     option (google.api.http) = {
-      post: "/v1/register"
+      post: "/v1/auth/register"
       body: "*",
     };
   }
 
   rpc LoginUser(LoginRequest) returns (LoginResponse) {
     option (google.api.http) = {
-      post: "/v1/login",
+      post: "/v1/auth/login",
       body: "*",
     };
   }
 
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
     option (google.api.http) = {
-      post: "/v1/refresh",
+      post: "/v1/auth/refresh",
       body: "*",
     };
   }

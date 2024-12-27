@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/labstack/gommon/log"
 	"google.golang.org/grpc/metadata"
 	"net/http"
 )
@@ -32,24 +31,31 @@ func RequiredCookieMiddleware() func(http.Handler) http.Handler {
 	}
 }
 
-func RefreshTokenToCookieMiddleware() func(http.Handler) http.Handler {
+func RefreshTokenToCookieMiddleware() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			res := &responseRecorder{ResponseWriter: w, body: &bytes.Buffer{}}
-			next.ServeHTTP(res, r)
+			res := responseRecorder{ResponseWriter: w, body: &bytes.Buffer{}}
+			next.ServeHTTP(&res, r)
 
-			log.Info("INVOKE 2 !!!")
-
-			if res.statusCode == http.StatusOK {
+			if res.statusCode == http.StatusOK || res.statusCode == 0 {
 				var resp map[string]interface{}
-				if err := json.Unmarshal(res.body.Bytes(), &resp); err != nil {
-					if refreshToken, ok := resp["refresh_token"]; ok {
-						http.SetCookie(res, &http.Cookie{
+				if err := json.Unmarshal(res.body.Bytes(), &resp); err == nil {
+					if refreshToken, ok := resp["refreshToken"].(string); ok {
+						http.SetCookie(w, &http.Cookie{
 							Name:     "refresh_token",
-							Value:    refreshToken.(string),
+							Value:    refreshToken,
 							HttpOnly: true,
+							Secure:   true,
 							Path:     "/",
 						})
+
+						delete(resp, "refreshToken")
+
+						w.Header().Set("Content-Type", "application/json")
+						if err := json.NewEncoder(w).Encode(resp); err != nil {
+							http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+						}
+						return
 					}
 				}
 			}
@@ -61,15 +67,15 @@ func RefreshTokenToCookieMiddleware() func(http.Handler) http.Handler {
 
 type responseRecorder struct {
 	http.ResponseWriter
-	statusCode int
 	body       *bytes.Buffer
+	statusCode int
+}
+
+func (r *responseRecorder) Write(data []byte) (int, error) {
+	return r.body.Write(data)
 }
 
 func (r *responseRecorder) WriteHeader(statusCode int) {
 	r.statusCode = statusCode
 	r.ResponseWriter.WriteHeader(statusCode)
-}
-
-func (r *responseRecorder) Write(data []byte) (int, error) {
-	return r.body.Write(data)
 }
