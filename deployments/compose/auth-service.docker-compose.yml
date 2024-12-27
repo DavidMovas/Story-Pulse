@@ -12,14 +12,29 @@ services:
       GRPC_PORT: ${AUTH_SERVICE_GRPC_PORT}
       GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
       CONSUL_ADDRESS: http://consul:8500
+      REDIS_URL: http://auth_redis:${REDIS_DB_PORT}
     networks:
       - gateway
       - default
     deploy:
       replicas: 1
 
+  auth_redis:
+    image: redis:7.4-alpine
+    ports:
+      - ${REDIS_DB_PORT}:6379
+    volumes:
+      - auth_db_data
+    networks:
+      - auth_db_net
+
 networks:
   gateway:
     driver: bridge
   default:
     driver: bridge
+  auth_db_net:
+    driver: bridge
+
+volumes:
+  auth_db_data:
