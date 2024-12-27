@@ -4,6 +4,7 @@ import (
 	"context"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"net/http"
 	"story-pulse/internal/auth-service/service"
@@ -54,6 +55,7 @@ func (h *Handler) RegisterUser(ctx context.Context, request *v1.RegisterRequest)
 	}
 
 	return &v1.RegisterResponse{
+		User:         res.User,
 		AccessToken:  res.AccessToken,
 		RefreshToken: res.RefreshToken,
 	}, nil
@@ -80,8 +82,29 @@ func (h *Handler) LoginUser(ctx context.Context, request *v1.LoginRequest) (*v1.
 }
 
 func (h *Handler) RefreshToken(ctx context.Context, request *v1.RefreshTokenRequest) (*v1.RefreshTokenResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	h.logger.Info("RefreshToken called")
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "metadata is not provided")
+	}
+
+	data := md.Get("refresh_token")
+	if len(data) == 0 {
+		return nil, status.Error(codes.Unauthenticated, "refresh token is empty")
+	}
+
+	refreshToken := data[0]
+	h.logger.Info("RefreshToken called", zap.String("refresh_token", refreshToken))
+
+	accessToken, err := h.service.RefreshToken(ctx, refreshToken)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, err.Error())
+	}
+
+	return &v1.RefreshTokenResponse{
+		AccessToken: accessToken,
+	}, nil
 }
 
 func (h *Handler) Health(writer http.ResponseWriter, _ *http.Request) {

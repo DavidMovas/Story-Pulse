@@ -2,10 +2,16 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/redis/go-redis/v9"
+	"story-pulse/internal/auth-service/models"
 	"time"
+)
+
+const (
+	refreshTokenPattern = "refresh_token:%s"
 )
 
 type Repository struct {
@@ -18,10 +24,17 @@ func NewRepository(client *redis.Client) *Repository {
 	}
 }
 
-func (r *Repository) SaveRefreshToken(ctx context.Context, userID int, refreshToken string, expirationTime time.Duration) error {
-	key := fmt.Sprintf("refresh_token:%d", userID)
+func (r *Repository) SaveRefreshToken(ctx context.Context, userID int, role, refreshToken string, expirationTime time.Duration) error {
+	key := fmt.Sprintf(refreshTokenPattern, refreshToken)
 
-	err := r.client.Set(ctx, key, refreshToken, expirationTime).Err()
+	data := &models.RefreshToken{
+		UserID: userID,
+		Role:   role,
+	}
+
+	jsonData, err := json.Marshal(data)
+
+	err = r.client.Set(ctx, key, jsonData, expirationTime).Err()
 	if err != nil {
 		return fmt.Errorf("failed to save refresh token: %w", err)
 	}
@@ -29,15 +42,26 @@ func (r *Repository) SaveRefreshToken(ctx context.Context, userID int, refreshTo
 	return nil
 }
 
-func (r *Repository) GetRefreshToken(ctx context.Context, userID int) (string, error) {
-	key := fmt.Sprintf("refresh_token:%d", userID)
+func (r *Repository) ValidateRefreshToken(ctx context.Context, refreshToken string) (*models.RefreshToken, error) {
+	key := fmt.Sprintf(refreshTokenPattern, refreshToken)
 
-	token, err := r.client.Get(ctx, key).Result()
+	data, err := r.client.Get(ctx, key).Result()
 	if errors.Is(err, redis.Nil) {
-		return "", fmt.Errorf("no refresh token found for user %d", userID)
+		return nil, fmt.Errorf("invalid or expired refresh token")
 	} else if err != nil {
-		return "", fmt.Errorf("failed to get refresh token for user %d: %w", userID, err)
+		return nil, fmt.Errorf("failed to validate refresh token: %w", err)
 	}
 
-	return token, nil
+	var token models.RefreshToken
+	err = json.Unmarshal([]byte(data), &token)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal refresh token: %w", err)
+	}
+
+	return &token, nil
+}
+
+func (r *Repository) RemoveRefreshToken(ctx context.Context, refreshToken string) error {
+	key := fmt.Sprintf(refreshTokenPattern, refreshToken)
+	return r.client.Del(ctx, key).Err()
 }

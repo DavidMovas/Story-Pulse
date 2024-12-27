@@ -19,7 +19,7 @@ func UnaryCookieGatewayInterceptor(ctx context.Context, method string, req any, 
 	}
 
 	token := tokens[0]
-	fmt.Printf("GATEWAY COOKIE INT: %s\n", token)
+	fmt.Printf("GATEWAY COOKIE INTER: %s\n", token)
 
 	return invoker(ctx, method, req, reply, cc, opts...)
 }

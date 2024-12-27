@@ -14,8 +14,6 @@ import (
 	"story-pulse/internal/api-gateway/middlewares"
 	"story-pulse/internal/api-gateway/mux"
 	"story-pulse/internal/api-gateway/options"
-	interceptors "story-pulse/internal/shared/interceptors/gateway"
-
 	_ "story-pulse/internal/api-gateway/resolver"
 	v1 "story-pulse/internal/shared/grpc/v1"
 )
@@ -64,9 +62,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		{
 			Name:         cfg.AuthService.ServicePath,
 			RegisterFunc: v1.RegisterAuthServiceHandler,
-			DialOptions: []grpc.DialOption{
-				grpc.WithUnaryInterceptor(interceptors.UnaryCookieGatewayInterceptor),
-			},
+			DialOptions:  []grpc.DialOption{},
 		},
 	}
 

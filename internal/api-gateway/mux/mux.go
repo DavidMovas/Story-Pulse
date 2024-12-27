@@ -13,6 +13,14 @@ const (
 
 func Register(httpMux *chi.Mux, grpcMux *runtime.ServeMux) {
 	httpMux.Route(authApiPrefix, func(r chi.Router) {
+		r.With(middlewares.RefreshTokenToCookieMiddleware()).Route("/register", func(r chi.Router) {
+			r.Mount("/", grpcMux)
+		})
+
+		r.With(middlewares.RefreshTokenToCookieMiddleware()).Route("/login", func(r chi.Router) {
+			r.Mount("/", grpcMux)
+		})
+
 		r.With(middlewares.RequiredCookieMiddleware()).Route("/refresh", func(r chi.Router) {
 			r.Mount("/", grpcMux)
 		})
