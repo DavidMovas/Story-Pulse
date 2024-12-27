@@ -57,8 +57,9 @@ func (h *Handler) RegisterUser(ctx context.Context, request *v1.RegisterRequest)
 	ctx = context.WithValue(ctx, "refresh_token", res.RefreshToken)
 
 	return &v1.RegisterResponse{
-		User:        res.User,
-		AccessToken: res.AccessToken,
+		User:         res.User,
+		AccessToken:  res.AccessToken,
+		RefreshToken: res.RefreshToken,
 	}, nil
 }
 
