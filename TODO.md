@@ -1,5 +1,4 @@
 # TODO List
-
 ## 27.12.2024
 1. Add Redis to store refresh tokens
 2. Add interceptors for incoming and out coming requests 
