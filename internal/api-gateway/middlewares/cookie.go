@@ -2,9 +2,8 @@ package middlewares
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
-	"github.com/labstack/gommon/log"
+	"github.com/goccy/go-json"
 	"google.golang.org/grpc/metadata"
 	"net/http"
 )
@@ -39,10 +38,10 @@ func RefreshTokenToCookieMiddleware() func(next http.Handler) http.Handler {
 			next.ServeHTTP(res, r)
 
 			if res.statusCode == http.StatusOK || res.statusCode == 0 {
-				var resp map[string]any
+				var resp map[string]interface{}
 				if err := json.Unmarshal(res.body.Bytes(), &resp); err == nil {
 					if refreshToken, ok := resp["refreshToken"].(string); ok {
-						http.SetCookie(w, &http.Cookie{
+						http.SetCookie(res.ResponseWriter, &http.Cookie{
 							Name:     "refresh_token",
 							Value:    refreshToken,
 							HttpOnly: true,
@@ -52,27 +51,22 @@ func RefreshTokenToCookieMiddleware() func(next http.Handler) http.Handler {
 
 						delete(resp, "refreshToken")
 					}
+
+					respData, err := json.Marshal(resp)
+					if err != nil {
+						http.Error(res.ResponseWriter, err.Error(), http.StatusInternalServerError)
+					}
+
+					_, err = res.ResponseWriter.Write(respData)
+					if err != nil {
+						http.Error(res.ResponseWriter, err.Error(), http.StatusInternalServerError)
+					}
+
+					return
 				}
-
-				respData, err := json.Marshal(resp)
-				if err != nil {
-					http.Error(res.ResponseWriter, err.Error(), http.StatusInternalServerError)
-				}
-
-				log.Info("START \n")
-				log.Infoj(resp)
-				log.Infof("DATA: %v", respData)
-				log.Infof("Refresh token: %s", string(res.body.Bytes()))
-				log.Info("FINISH \n")
-
-				bytesWritten, err := w.Write(respData)
-				if err != nil {
-					http.Error(res.ResponseWriter, err.Error(), http.StatusInternalServerError)
-				}
-
-				log.Infof("BYTES: %d", bytesWritten)
 			}
 
+			w.WriteHeader(http.StatusUnauthorized)
 			_, _ = w.Write(res.body.Bytes())
 		})
 	}
