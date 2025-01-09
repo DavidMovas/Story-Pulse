@@ -1,6 +1,9 @@
 package jwt
 
 import (
+	"crypto/rand"
+	"encoding/base64"
+	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"strconv"
@@ -8,14 +11,16 @@ import (
 )
 
 type Service struct {
-	secret           string
-	accessExpiration time.Duration
+	secret            string
+	accessExpiration  time.Duration
+	refreshExpiration time.Duration
 }
 
-func NewService(secret string, accessExpiration time.Duration) *Service {
+func NewService(secret string, accessExpiration, refreshExpiration time.Duration) *Service {
 	return &Service{
-		secret:           secret,
-		accessExpiration: accessExpiration,
+		secret:            secret,
+		accessExpiration:  accessExpiration,
+		refreshExpiration: refreshExpiration,
 	}
 }
 
@@ -36,6 +41,19 @@ func (s *Service) GenerateToken(userID int, role string) (string, error) {
 	return token.SignedString([]byte(s.secret))
 }
 
+func (s *Service) GenerateRefreshToken() (string, error) {
+	token := make([]byte, 32)
+	if _, err := rand.Read(token); err != nil {
+		return "", fmt.Errorf("failed to generate refresh token %w", err)
+	}
+
+	return base64.URLEncoding.EncodeToString(token), nil
+}
+
 func (s *Service) GetAccessExpiration() time.Duration {
 	return s.accessExpiration
+}
+
+func (s *Service) GetRefreshExpiration() time.Duration {
+	return s.refreshExpiration
 }

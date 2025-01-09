@@ -31,10 +31,9 @@ full-up:
 	docker-compose -f ./deployments/compose/users-service.docker-compose.yml --env-file=./.env up -d --build
 
 full-down:
-	docker-compose -f ./deployments/compose/users-service.docker-compose.yml --env-file=./.env down
-	docker-compose -f ./deployments/compose/auth-service.docker-compose.yml --env-file=./.env down
 	docker-compose -f ./deployments/compose/gateway.docker-compose.yml --env-file=./.env down
-	make net-clear
+	docker-compose -f ./deployments/compose/auth-service.docker-compose.yml --env-file=./.env downd
+	docker-compose -f ./deployments/compose/users-service.docker-compose.yml --env-file=./.env down
 
 gateway-up:
 	docker-compose -f ./deployments/compose/gateway.docker-compose.yml --env-file=./.env up -d --build

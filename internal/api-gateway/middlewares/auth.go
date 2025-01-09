@@ -1,16 +1,31 @@
 package middlewares
 
 import (
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc/metadata"
 	"net/http"
 )
 
-func NewAuthMiddleware() runtime.Middleware {
-	return func(next runtime.HandlerFunc) runtime.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+func AuthMiddleware() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token := r.Header.Get("Authorization")
-			userId := r.URL.Query().Get("userId")
+
+			pairs := metadata.Pairs()
+			if token != "" {
+				pairs.Append("token", token)
+			}
+
+			ctx := metadata.NewIncomingContext(r.Context(), pairs)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+func AuthAndIDMiddleware() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			token := r.Header.Get("Authorization")
+			userId := r.URL.Query().Get("id")
 
 			pairs := metadata.Pairs()
 			if token != "" {
@@ -22,7 +37,7 @@ func NewAuthMiddleware() runtime.Middleware {
 			}
 
 			ctx := metadata.NewIncomingContext(r.Context(), pairs)
-			next(w, r.WithContext(ctx), pathParams)
-		}
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
 	}
 }

@@ -24,7 +24,6 @@ type CustomMarshaler struct {
 func (c CustomMarshaler) Marshal(v interface{}) ([]byte, error) {
 	if entityMap, ok := v.(map[string]interface{}); ok && len(entityMap) == 1 {
 		for _, value := range entityMap {
-
 			return json.Marshal(value)
 		}
 	}

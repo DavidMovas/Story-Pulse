@@ -4,53 +4,51 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	gwruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"net/http"
+	"story-pulse/internal/shared/resolver"
 )
 
 type ServiceOption struct {
 	Name         string
-	RegisterFunc func(ctx context.Context, mux *gwruntime.ServeMux, conn *grpc.ClientConn) error
-	Options      []grpc.DialOption
+	RegisterFunc func(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error
+	DialOptions  []grpc.DialOption
+}
+
+type Wrapper struct {
+	Path string
+	Func func(http.Handler) http.Handler
 }
 
 type Gateway struct {
-	mux    *gwruntime.ServeMux
 	logger *zap.SugaredLogger
 	coons  []*grpc.ClientConn
 }
 
-func NewGateway(ctx context.Context, logger *zap.SugaredLogger, opts []gwruntime.ServeMuxOption, serviceOpts ...*ServiceOption) (*Gateway, error) {
-	mux := gwruntime.NewServeMux(opts...)
-
+func NewGateway(ctx context.Context, grpcMux *runtime.ServeMux, logger *zap.SugaredLogger, serviceOpts ...*ServiceOption) (*Gateway, error) {
 	var gateway Gateway
 	gateway.logger = logger
-	gateway.mux = mux
 
-	for _, opt := range serviceOpts {
-		dialOptions := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-		dialOptions = append(dialOptions, opt.Options...)
+	for _, srvOpt := range serviceOpts {
+		dialOptions := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithResolvers(&resolver.Builder{})}
+		dialOptions = append(dialOptions, srvOpt.DialOptions...)
 
-		conn, err := dial(fmt.Sprintf("dynamic:///%s", opt.Name), dialOptions...)
+		conn, err := dial(fmt.Sprintf("dynamic:///%s", srvOpt.Name), dialOptions...)
 		if err != nil {
 			return nil, err
 		}
 
 		gateway.coons = append(gateway.coons, conn)
 
-		if err = opt.RegisterFunc(ctx, mux, conn); err != nil {
+		if err = srvOpt.RegisterFunc(ctx, grpcMux, conn); err != nil {
 			return nil, err
 		}
 	}
 
 	return &gateway, nil
-}
-
-func (g *Gateway) Proxy() http.Handler {
-	return g.mux
 }
 
 func (g *Gateway) Close() error {

@@ -12,11 +12,11 @@ type Config struct {
 }
 
 type UsersServiceConfig struct {
-	ServicePath string `env:"PATH"`
+	ServicePath string `env:"PATH" envDefault:"users-service"`
 }
 
 type AuthServiceConfig struct {
-	ServicePath string `env:"PATH"`
+	ServicePath string `env:"PATH" envDefault:"auth-service"`
 }
 
 type ContentServiceConfig struct {
@@ -32,5 +32,5 @@ type SearchServiceConfig struct {
 }
 
 type ResolverConfig struct {
-	ConsulAddress string `env:"CONSUL_ADDRESS"`
+	ConsulAddress string `env:"CONSUL_ADDRESS" envDefault:"localhost:8500"`
 }

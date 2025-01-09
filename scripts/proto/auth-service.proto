@@ -4,28 +4,61 @@ package authservice.v1;
 
 option go_package = "./grpc/v1";
 
+import "google/api/annotations.proto";
+import "google/protobuf/descriptor.proto";
+import "common.proto";
+
 service AuthService {
-  rpc GenerateToken(GenerateTokenRequest) returns (GenerateTokenResponse);
-  rpc CheckToken(CheckTokenRequest) returns (CheckTokenResponse);
+  rpc RegisterUser(RegisterRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/register"
+      body: "*",
+    };
+  }
+
+  rpc LoginUser(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/login",
+      body: "*",
+    };
+  }
+
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/refresh",
+      body: "*",
+    };
+  }
 }
 
-message GenerateTokenRequest {
-  int64 user_id = 1;
-  string role = 2;
+message RegisterRequest {
+  string email = 1;
+  string username = 2;
+  string password = 3;
 }
 
-message GenerateTokenResponse {
-  string token = 1;
+message RegisterResponse {
+  common.v1.User user = 1;
+  string access_token = 2;
+  string refresh_token = 3;
 }
 
-message CheckTokenRequest {
-  string token = 1;
-  string user_id = 2;
-  string role = 3;
-  bool self = 4;
+message LoginRequest {
+  optional string email = 1;
+  optional string username = 2;
+  string password = 3;
 }
 
-message CheckTokenResponse {
-  bool valid = 1;
+message LoginResponse {
+  string access_token = 2;
+  string refresh_token = 3;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  string access_token = 1;
 }
 

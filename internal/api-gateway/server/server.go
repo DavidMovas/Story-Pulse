@@ -3,7 +3,8 @@ package server
 import (
 	"context"
 	"fmt"
-	gwruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/go-chi/chi/v5"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"net/http"
@@ -11,14 +12,14 @@ import (
 	"story-pulse/internal/api-gateway/gateway"
 	"story-pulse/internal/api-gateway/handlers"
 	"story-pulse/internal/api-gateway/middlewares"
+	"story-pulse/internal/api-gateway/mux"
 	"story-pulse/internal/api-gateway/options"
-	_ "story-pulse/internal/api-gateway/resolver"
 	v1 "story-pulse/internal/shared/grpc/v1"
 )
 
 type Server struct {
 	gateway *gateway.Gateway
-	mux     *http.ServeMux
+	mux     *chi.Mux
 	logger  *zap.SugaredLogger
 	cfg     *config.Config
 
@@ -34,41 +35,44 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	}()
 
 	sugar := logger.Sugar().WithOptions(zap.WithCaller(false))
+	grpcMuxOpts := []runtime.ServeMuxOption{runtime.WithErrorHandler(options.CustomErrorHandler)}
 
-	mux := http.NewServeMux()
+	// GRPC Mux
+	grpcMux := runtime.NewServeMux(grpcMuxOpts...)
+
+	// HTTP Mux
+	httpMux := chi.NewMux()
+	httpMux.Use(middlewares.NewLoggerMiddleware(sugar))
+
+	// Register middlewares and routes
+	mux.Register(httpMux, grpcMux)
 
 	handler := handlers.NewHandler(sugar)
-	mux.HandleFunc("/health", handler.Health)
-
-	muxOpts := []gwruntime.ServeMuxOption{
-		gwruntime.WithErrorHandler(options.CustomErrorHandler),
-		gwruntime.WithMiddlewares(
-			middlewares.NewLoggerMiddleware(sugar),
-			middlewares.NewAuthMiddleware(),
-		),
-	}
+	httpMux.HandleFunc("/health", handler.Health)
 
 	serviceOpts := []*gateway.ServiceOption{
 		{
 			Name:         cfg.UsersService.ServicePath,
 			RegisterFunc: v1.RegisterUsersServiceHandler,
-			Options: []grpc.DialOption{
+			DialOptions: []grpc.DialOption{
 				grpc.WithPerRPCCredentials(options.NewAuthenticateCredentials()),
 			},
 		},
+		{
+			Name:         cfg.AuthService.ServicePath,
+			RegisterFunc: v1.RegisterAuthServiceHandler,
+		},
 	}
 
-	gt, err := gateway.NewGateway(serverCtx, sugar, muxOpts, serviceOpts...)
+	gt, err := gateway.NewGateway(serverCtx, grpcMux, sugar, serviceOpts...)
 	if err != nil {
 		cancel()
 		return nil, err
 	}
 
-	mux.Handle("/", gt.Proxy())
-
 	return &Server{
 		gateway: gt,
-		mux:     mux,
+		mux:     httpMux,
 		ctx:     serverCtx,
 		logger:  sugar,
 		cfg:     cfg,
