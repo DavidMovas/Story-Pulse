@@ -135,6 +135,9 @@ func (s *Server) Port() (int, error) {
 func (s *Server) register() error {
 	consulCfg := api.DefaultConfig()
 	consulCfg.Address = s.cfg.ConsulAddr
+
+	fmt.Printf("CONSUL ADDRESS: %s\n", s.cfg.ConsulAddr)
+
 	check := &api.AgentServiceCheck{
 		HTTP:                           fmt.Sprintf("http://%s:%d/health", s.cfg.Address, s.cfg.WebPort),
 		Interval:                       "10s",

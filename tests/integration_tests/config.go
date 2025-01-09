@@ -1,10 +1,12 @@
 package integration_tests
 
 const (
-	defaultGracefulTimeout = "10s"
+	defaultGracefulTimeout = "10"
 )
 
 type TestConfig struct {
+	Network         string
+	GatewayConfig   *GatewayConfig
 	ConsulConfig    *ConsulConfig
 	UsersServiceCfg *UsersServiceConfig
 	AuthService     *AuthService
@@ -12,10 +14,19 @@ type TestConfig struct {
 
 func NewTestConfig() *TestConfig {
 	return &TestConfig{
+		Network: "global_network",
+		GatewayConfig: &GatewayConfig{
+			Name:            "api-gateway",
+			Image:           "story-pulse-api-gateway",
+			Address:         "http://localhost:8000",
+			WebPort:         "8000",
+			GrpcPort:        "8001",
+			GracefulTimeout: defaultGracefulTimeout,
+		},
 		ConsulConfig: &ConsulConfig{
 			Name:    "consul",
 			Image:   "consul:1.15",
-			Address: "localhost:8500",
+			Address: "http://consul:8500",
 			APIPort: "8500",
 		},
 		UsersServiceCfg: &UsersServiceConfig{
@@ -46,6 +57,18 @@ func NewTestConfig() *TestConfig {
 			RedisPort:  "6379",
 		},
 	}
+}
+
+type GatewayConfig struct {
+	Name            string
+	Image           string
+	Address         string
+	WebPort         string
+	GrpcPort        string
+	GracefulTimeout string
+
+	UsersServicePath string
+	AuthServicePath  string
 }
 
 type ConsulConfig struct {

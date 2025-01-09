@@ -3,24 +3,27 @@ package integration_tests
 import (
 	"context"
 	"fmt"
+	"github.com/docker/go-connections/nat"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/tern/migrate"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"testing"
+	"time"
 )
 
 func prepareInfrastructure(t *testing.T, cfg *TestConfig, runFunc func(t *testing.T, cfg *TestConfig)) {
 	var cleanUpFuncs []func(context.Context) error
 	defer cleanUp(t, cleanUpFuncs...)
 
-	// Consul
+	// Consul container
 	consul, err := testcontainers.GenericContainer(context.Background(), testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
 			Name:         cfg.ConsulConfig.Name,
 			Image:        cfg.ConsulConfig.Image,
-			ExposedPorts: []string{cfg.ConsulConfig.APIPort},
+			ExposedPorts: []string{fmt.Sprintf("%s:%s", cfg.ConsulConfig.APIPort, cfg.ConsulConfig.APIPort)},
+			Networks:     []string{cfg.Network},
 		},
 		Started: true,
 	})
@@ -39,8 +42,9 @@ func prepareInfrastructure(t *testing.T, cfg *TestConfig, runFunc func(t *testin
 				"POSTGRES_DB":       cfg.UsersServiceCfg.PostgresDB,
 			},
 			ExposedPorts: []string{
-				fmt.Sprintf("%s/tcp", cfg.UsersServiceCfg.PostgresPort),
+				fmt.Sprintf("%s:%s", cfg.UsersServiceCfg.PostgresPort, cfg.UsersServiceCfg.PostgresPort),
 			},
+			Networks:   []string{cfg.Network},
 			WaitingFor: wait.ForLog("database system is ready to accept connections"),
 		},
 		Started: true,
@@ -52,6 +56,7 @@ func prepareInfrastructure(t *testing.T, cfg *TestConfig, runFunc func(t *testin
 	require.NoError(t, err)
 	cfg.UsersServiceCfg.DatabaseURL = fmt.Sprintf("postgres://%s:%s@%s:%d/%s", cfg.UsersServiceCfg.PostgresUsername, cfg.UsersServiceCfg.PostgresPassword, "localhost", postgresMappedPort.Int(), cfg.UsersServiceCfg.PostgresDB)
 
+	time.Sleep(time.Second * 2)
 	runMigrations(t, cfg.UsersServiceCfg.DatabaseURL)
 
 	// Users service container
@@ -67,10 +72,7 @@ func prepareInfrastructure(t *testing.T, cfg *TestConfig, runFunc func(t *testin
 				"CONSUL_ADDRESS":   cfg.ConsulConfig.Address,
 				"DATABASE_URL":     cfg.UsersServiceCfg.DatabaseURL,
 			},
-			ExposedPorts: []string{
-				cfg.UsersServiceCfg.WebPort,
-				cfg.UsersServiceCfg.GrpcPort,
-			},
+			Networks: []string{cfg.Network},
 		},
 		Started: true,
 	})
@@ -78,13 +80,16 @@ func prepareInfrastructure(t *testing.T, cfg *TestConfig, runFunc func(t *testin
 	require.NoError(t, err)
 	cleanUpFuncs = append(cleanUpFuncs, usersService.Terminate)
 
+	// Auth service Redis container
 	authServiceRedis, err := testcontainers.GenericContainer(context.Background(), testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
 			Name:         cfg.AuthService.RedisName,
 			Image:        cfg.AuthService.RedisImage,
 			ExposedPorts: []string{fmt.Sprintf("%s/tcp", cfg.AuthService.RedisPort)},
+			Networks:     []string{cfg.Network},
 			WaitingFor:   wait.ForLog("Ready to accept connections"),
 		},
+		Started: true,
 	})
 
 	require.NoError(t, err)
@@ -94,6 +99,7 @@ func prepareInfrastructure(t *testing.T, cfg *TestConfig, runFunc func(t *testin
 
 	cfg.AuthService.RedisURL = fmt.Sprintf("localhost:%d", redisMappedPort.Int())
 
+	// Auth service container
 	authService, err := testcontainers.GenericContainer(context.Background(), testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
 			Name:  cfg.AuthService.Name,
@@ -106,16 +112,43 @@ func prepareInfrastructure(t *testing.T, cfg *TestConfig, runFunc func(t *testin
 				"CONSUL_ADDRESS":   cfg.ConsulConfig.Address,
 				"REDIS_URL":        cfg.AuthService.RedisURL,
 			},
-			ExposedPorts: []string{
-				cfg.AuthService.WebPort,
-				cfg.AuthService.GrpcPort,
-			},
+			Networks: []string{cfg.Network},
 		},
 		Started: true,
 	})
 
 	require.NoError(t, err)
 	cleanUpFuncs = append(cleanUpFuncs, authService.Terminate)
+
+	// API Gateway container
+	gateway, err := testcontainers.GenericContainer(context.Background(), testcontainers.GenericContainerRequest{
+		ContainerRequest: testcontainers.ContainerRequest{
+			Name:  cfg.GatewayConfig.Name,
+			Image: cfg.GatewayConfig.Image,
+			Env: map[string]string{
+				"PORT":               cfg.GatewayConfig.WebPort,
+				"GRPC_PORT":          cfg.GatewayConfig.GrpcPort,
+				"GRACEFUL_TIMEOUT":   cfg.GatewayConfig.GracefulTimeout,
+				"USERS_SERVICE_PATH": cfg.GatewayConfig.UsersServicePath,
+				"AUTH_SERVICE_PATH":  cfg.GatewayConfig.AuthServicePath,
+			},
+			ExposedPorts: []string{
+				fmt.Sprintf("%s:%s", cfg.GatewayConfig.WebPort, cfg.GatewayConfig.WebPort),
+			},
+			Networks: []string{cfg.Network},
+		},
+		Started: true,
+	})
+
+	require.NoError(t, err)
+	cleanUpFuncs = append(cleanUpFuncs, gateway.Terminate)
+
+	gatewayMappedPort, err := gateway.MappedPort(context.Background(), nat.Port(cfg.GatewayConfig.WebPort))
+	require.NoError(t, err)
+	cfg.GatewayConfig.WebPort = gatewayMappedPort.Port()
+
+	time.Sleep(time.Second * 5)
+	runFunc(t, cfg)
 }
 
 func runMigrations(t *testing.T, pgConnString string) {
