@@ -69,7 +69,7 @@ func RefreshTokenToCookieMiddleware() func(next http.Handler) http.Handler {
 				return
 			}
 
-			w.WriteHeader(http.StatusUnauthorized)
+			w.WriteHeader(res.statusCode)
 			_, _ = w.Write(res.body.Bytes())
 		})
 	}
