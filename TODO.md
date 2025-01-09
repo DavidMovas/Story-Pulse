@@ -4,5 +4,4 @@
 2. Add interceptors for incoming and out coming requests 
 that will work with refresh endpoint
 3. Create some integration tests for gateway and some services via gRPC
-4. Add GitHub actions to workflow 
-5. *Check Prisma ORM to use with Golang
+4. Add GitHub actions to workflow

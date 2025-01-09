@@ -2,10 +2,11 @@ package middlewares
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
-	"github.com/goccy/go-json"
 	"google.golang.org/grpc/metadata"
 	"net/http"
+	"strconv"
 )
 
 func RequiredCookieMiddleware() func(http.Handler) http.Handler {
@@ -39,31 +40,33 @@ func RefreshTokenToCookieMiddleware() func(next http.Handler) http.Handler {
 
 			if res.statusCode == http.StatusOK || res.statusCode == 0 {
 				var resp map[string]interface{}
-				if err := json.Unmarshal(res.body.Bytes(), &resp); err == nil {
-					if refreshToken, ok := resp["refreshToken"].(string); ok {
-						http.SetCookie(res.ResponseWriter, &http.Cookie{
-							Name:     "refresh_token",
-							Value:    refreshToken,
-							HttpOnly: true,
-							Secure:   true,
-							Path:     "/",
-						})
+				if err := json.Unmarshal(res.body.Bytes(), &resp); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
 
-						delete(resp, "refreshToken")
-					}
-
-					respData, err := json.Marshal(resp)
-					if err != nil {
-						http.Error(res.ResponseWriter, err.Error(), http.StatusInternalServerError)
-					}
-
-					_, err = res.ResponseWriter.Write(respData)
-					if err != nil {
-						http.Error(res.ResponseWriter, err.Error(), http.StatusInternalServerError)
-					}
-
+				if refreshToken, ok := resp["refreshToken"].(string); ok {
+					http.SetCookie(w, &http.Cookie{
+						Name:     "refresh_token",
+						Value:    refreshToken,
+						HttpOnly: true,
+						Secure:   true,
+						Path:     "/",
+					})
+					delete(resp, "refreshToken")
+				} else {
+					http.Error(w, "Refresh token not provided", http.StatusInternalServerError)
 					return
 				}
+
+				respData, err := json.Marshal(resp)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				w.Header().Set("Content-Length", strconv.Itoa(len(respData)))
+				_, _ = w.Write(respData)
+				return
 			}
 
 			w.WriteHeader(http.StatusUnauthorized)
