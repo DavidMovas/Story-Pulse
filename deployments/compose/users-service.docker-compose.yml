@@ -16,7 +16,6 @@ services:
     networks:
       - gateway
       - users_db_net
-      - default
     deploy:
       replicas: 2
     depends_on:
@@ -60,10 +59,9 @@ services:
 
 networks:
   gateway:
-    driver: bridge
-  default:
-    driver: bridge
+    external: true
   users_db_net:
+    external: true
 
 volumes:
   users_db_data:
