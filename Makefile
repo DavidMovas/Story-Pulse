@@ -24,8 +24,6 @@ net-clear:
 
 ## Gateway splitted
 full-up:
-	make net-clear
-	make net-create
 	docker-compose -f ./deployments/compose/gateway.docker-compose.yml --env-file=./.env up -d --build
 	docker-compose -f ./deployments/compose/auth-service.docker-compose.yml --env-file=./.env up -d --build
 	docker-compose -f ./deployments/compose/users-service.docker-compose.yml --env-file=./.env up -d --build

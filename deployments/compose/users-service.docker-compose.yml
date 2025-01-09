@@ -59,9 +59,7 @@ services:
 
 networks:
   gateway:
-    external: true
   users_db_net:
-    external: true
 
 volumes:
   users_db_data:
