@@ -26,7 +26,7 @@ func NewTestConfig() *TestConfig {
 		ConsulConfig: &ConsulConfig{
 			Name:    "consul",
 			Image:   "consul:1.15",
-			Address: "http://consul:8500",
+			Address: "localhost:8500",
 			APIPort: "8500",
 		},
 		UsersServiceCfg: &UsersServiceConfig{

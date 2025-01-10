@@ -102,8 +102,11 @@ func prepareInfrastructure(t *testing.T, cfg *TestConfig, runFunc func(t *testin
 	// Auth service container
 	authService, err := testcontainers.GenericContainer(context.Background(), testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
-			Name:  cfg.AuthService.Name,
-			Image: cfg.AuthService.Image,
+			FromDockerfile: testcontainers.FromDockerfile{
+				Context:    "../../.",
+				Dockerfile: "deployments/docker-tests/auth-service.dockerfile",
+			},
+			Name: cfg.AuthService.Name,
 			Env: map[string]string{
 				"NAME":             cfg.AuthService.Name,
 				"ADDRESS":          cfg.AuthService.Address,
