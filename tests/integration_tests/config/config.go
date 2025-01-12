@@ -1,4 +1,4 @@
-package integration_tests
+package config
 
 const (
 	defaultGracefulTimeout = "10"
@@ -37,12 +37,13 @@ func NewTestConfig() *TestConfig {
 			GrpcPort:        "8031",
 			GracefulTimeout: defaultGracefulTimeout,
 
-			PostgresName:     "users-service-postgres",
-			PostgresImage:    "postgres:17.2-alpine",
-			PostgresUsername: "user",
-			PostgresPassword: "pass",
-			PostgresDB:       "users",
-			PostgresPort:     "5432",
+			PostgresName:         "users-service-postgres",
+			PostgresImage:        "postgres:17.2-alpine",
+			PostgresUsername:     "user",
+			PostgresPassword:     "pass",
+			PostgresDB:           "users",
+			PostgresPort:         "5432",
+			PostgresNetworkAlias: "postgres",
 		},
 		AuthService: &AuthService{
 			Name:            "auth-service",
@@ -52,9 +53,10 @@ func NewTestConfig() *TestConfig {
 			GrpcPort:        "8021",
 			GracefulTimeout: defaultGracefulTimeout,
 
-			RedisName:  "auth-service-redis",
-			RedisImage: "redis:7.4-alpine",
-			RedisPort:  "6379",
+			RedisName:         "auth-service-redis",
+			RedisImage:        "redis:7.4-alpine",
+			RedisPort:         "6379",
+			RedisNetworkAlias: "redis",
 		},
 	}
 }
@@ -88,12 +90,13 @@ type UsersServiceConfig struct {
 	GracefulTimeout string
 
 	// Postgres
-	PostgresName     string
-	PostgresImage    string
-	PostgresUsername string
-	PostgresPassword string
-	PostgresDB       string
-	PostgresPort     string
+	PostgresName         string
+	PostgresImage        string
+	PostgresUsername     string
+	PostgresPassword     string
+	PostgresDB           string
+	PostgresPort         string
+	PostgresNetworkAlias string
 }
 
 type AuthService struct {
@@ -106,7 +109,8 @@ type AuthService struct {
 	GracefulTimeout string
 
 	// Redis
-	RedisName  string
-	RedisImage string
-	RedisPort  string
+	RedisName         string
+	RedisImage        string
+	RedisPort         string
+	RedisNetworkAlias string
 }
