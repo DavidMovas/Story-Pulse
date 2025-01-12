@@ -1,13 +1,16 @@
 package integration_tests
 
 import (
+	"context"
 	"story-pulse/client"
 	"testing"
 )
 
 func TestEcosystem(t *testing.T) {
 	cfg := NewTestConfig()
-	prepareInfrastructure(t, cfg, runServer)
+	ctx := context.Background()
+
+	prepareInfrastructure(t, ctx, cfg, runServer)
 }
 
 func runServer(t *testing.T, cfg *TestConfig) {

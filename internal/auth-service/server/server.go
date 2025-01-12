@@ -56,9 +56,6 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	}
 
 	rdb, err := connectDB(ctx, cfg)
-
-	sugar.Infof("CONFIG: %v", cfg)
-
 	if err != nil {
 		sugar.Errorw("Failed to connect to database", "error", err)
 		return nil, err
@@ -157,10 +154,7 @@ func (s *Server) register() error {
 }
 
 func connectDB(ctx context.Context, cfg *config.Config) (*redis.Client, error) {
-	rdb := redis.NewClient(&redis.Options{
-		Addr: cfg.RedisURL,
-	})
-
+	rdb := redis.NewClient(&redis.Options{Addr: cfg.RedisURL})
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		return nil, err
 	}

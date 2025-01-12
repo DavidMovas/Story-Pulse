@@ -14,7 +14,7 @@ type TestConfig struct {
 
 func NewTestConfig() *TestConfig {
 	return &TestConfig{
-		Network: "global_network",
+		Network: "test-network",
 		GatewayConfig: &GatewayConfig{
 			Name:            "api-gateway",
 			Image:           "story-pulse-api-gateway",
@@ -26,7 +26,7 @@ func NewTestConfig() *TestConfig {
 		ConsulConfig: &ConsulConfig{
 			Name:    "consul",
 			Image:   "consul:1.15",
-			Address: "localhost:8500",
+			Address: "consul:8500",
 			APIPort: "8500",
 		},
 		UsersServiceCfg: &UsersServiceConfig{
