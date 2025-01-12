@@ -55,7 +55,7 @@ func (r *Repository) GetUserByID(ctx context.Context, userId int) (*User, error)
 
 	switch {
 	case dbx.IsNoRows(err):
-		return nil, status.Errorf(codes.NotFound, "user %d not found", userId)
+		return nil, status.Errorf(codes.NotFound, "user id: %d not found", userId)
 	case err != nil:
 		return nil, status.Errorf(codes.Internal, "cannot fetch user: %v", err)
 	}

@@ -1,6 +1,8 @@
 package client
 
-import "story-pulse/contracts"
+import (
+	"story-pulse/contracts"
+)
 
 func (c *Client) GetUserByID(req *contracts.GetUserByIDRequest) (*contracts.User, error) {
 	var user *contracts.User

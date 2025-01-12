@@ -32,7 +32,7 @@ func prepareInfrastructure(t *testing.T, ctx context.Context, cfg *config.TestCo
 
 	require.NoError(t, err)
 	defer cleanUp(t, usersServicePostgres.Terminate)
-	time.Sleep(time.Second * 4)
+	time.Sleep(time.Second * 2)
 
 	usersServicePostgresPort, err := usersServicePostgres.MappedPort(ctx, nat.Port(cfg.UsersServiceCfg.PostgresPort))
 	require.NoError(t, err)
