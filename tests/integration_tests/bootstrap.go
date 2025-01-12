@@ -76,7 +76,6 @@ func prepareInfrastructure(t *testing.T, ctx context.Context, cfg *config.TestCo
 
 	require.NoError(t, err)
 	defer cleanUp(t, authService.Terminate)
-	time.Sleep(time.Second * 2)
 
 	// API Gateway container
 	gateway, err := testcontainers.GenericContainer(ctx, containers.NewGateway(cfg))
@@ -89,7 +88,7 @@ func prepareInfrastructure(t *testing.T, ctx context.Context, cfg *config.TestCo
 	cfg.GatewayConfig.WebPort = gatewayMappedPort.Port()
 	cfg.GatewayConfig.Address = fmt.Sprintf("http://localhost:%s", gatewayMappedPort.Port())
 
-	time.Sleep(time.Second * 2)
+	time.Sleep(time.Second * 15)
 	runFunc(t, cfg)
 }
 

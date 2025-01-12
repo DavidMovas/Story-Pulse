@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"net/http"
-	"story-pulse/internal/shared/resolver"
+	"story-pulse/internal/api-gateway/resolver"
 )
 
 type ServiceOption struct {

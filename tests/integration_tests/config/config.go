@@ -18,10 +18,12 @@ func NewTestConfig() *TestConfig {
 		GatewayConfig: &GatewayConfig{
 			Name:            "api-gateway_test",
 			Image:           "story-pulse-api-gateway",
-			Address:         "http://localhost:9000",
-			WebPort:         "9000",
+			WebPort:         "9876",
 			GrpcPort:        "9001",
 			GracefulTimeout: defaultGracefulTimeout,
+
+			UsersServicePath: "users-service",
+			AuthServicePath:  "auth-service",
 		},
 		ConsulConfig: &ConsulConfig{
 			Name:    "consul_test",
