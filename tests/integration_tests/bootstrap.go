@@ -2,6 +2,7 @@ package integration_tests
 
 import (
 	"context"
+	"fmt"
 	"github.com/docker/go-connections/nat"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/tern/migrate"
@@ -75,6 +76,7 @@ func prepareInfrastructure(t *testing.T, ctx context.Context, cfg *config.TestCo
 
 	require.NoError(t, err)
 	defer cleanUp(t, authService.Terminate)
+	time.Sleep(time.Second * 2)
 
 	// API Gateway container
 	gateway, err := testcontainers.GenericContainer(ctx, containers.NewGateway(cfg))
@@ -85,6 +87,7 @@ func prepareInfrastructure(t *testing.T, ctx context.Context, cfg *config.TestCo
 	gatewayMappedPort, err := gateway.MappedPort(ctx, nat.Port(cfg.GatewayConfig.WebPort))
 	require.NoError(t, err)
 	cfg.GatewayConfig.WebPort = gatewayMappedPort.Port()
+	cfg.GatewayConfig.Address = fmt.Sprintf("http://localhost:%s", gatewayMappedPort.Port())
 
 	time.Sleep(time.Second * 2)
 	runFunc(t, cfg)

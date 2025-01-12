@@ -1,7 +1,6 @@
 package containers
 
 import (
-	"fmt"
 	"github.com/testcontainers/testcontainers-go"
 	"story-pulse/tests/integration_tests/config"
 )
@@ -22,10 +21,8 @@ func NewGateway(cfg *config.TestConfig) testcontainers.GenericContainerRequest {
 				"USERS_SERVICE_PATH": cfg.GatewayConfig.UsersServicePath,
 				"AUTH_SERVICE_PATH":  cfg.GatewayConfig.AuthServicePath,
 			},
-			ExposedPorts: []string{
-				fmt.Sprintf("%s:%s", cfg.GatewayConfig.WebPort, cfg.GatewayConfig.WebPort),
-			},
-			Networks: []string{cfg.Network},
+			ExposedPorts: []string{cfg.GatewayConfig.WebPort},
+			Networks:     []string{cfg.Network},
 		},
 		Started: true,
 	}

@@ -42,12 +42,14 @@ func NewUsersService(cfg *config.TestConfig) testcontainers.GenericContainerRequ
 			Env: map[string]string{
 				"NAME":             cfg.UsersServiceCfg.Name,
 				"ADDRESS":          cfg.UsersServiceCfg.Address,
+				"PORT":             cfg.UsersServiceCfg.WebPort,
 				"GRPC_PORT":        cfg.UsersServiceCfg.GrpcPort,
 				"GRACEFUL_TIMEOUT": cfg.UsersServiceCfg.GracefulTimeout,
 				"CONSUL_ADDRESS":   cfg.ConsulConfig.Address,
 				"DATABASE_URL":     cfg.UsersServiceCfg.DatabaseURL,
 			},
-			Networks: []string{cfg.Network},
+			ExposedPorts: []string{cfg.UsersServiceCfg.WebPort},
+			Networks:     []string{cfg.Network},
 		},
 		Started: true,
 	}

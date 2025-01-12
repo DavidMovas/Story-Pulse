@@ -18,7 +18,7 @@ func NewTestConfig() *TestConfig {
 		GatewayConfig: &GatewayConfig{
 			Name:            "api-gateway_test",
 			Image:           "story-pulse-api-gateway",
-			Address:         "http://localhost:8000",
+			Address:         "http://localhost:9000",
 			WebPort:         "9000",
 			GrpcPort:        "9001",
 			GracefulTimeout: defaultGracefulTimeout,
@@ -31,7 +31,7 @@ func NewTestConfig() *TestConfig {
 		},
 		UsersServiceCfg: &UsersServiceConfig{
 			Name:            "users-service_test",
-			Address:         "users-service",
+			Address:         "users-service_test",
 			Image:           "story-pulse-users-service",
 			WebPort:         "9030",
 			GrpcPort:        "9031",
@@ -47,7 +47,7 @@ func NewTestConfig() *TestConfig {
 		},
 		AuthService: &AuthService{
 			Name:            "auth-service_test",
-			Address:         "auth-service",
+			Address:         "auth-service_test",
 			Image:           "story-pulse-auth-service",
 			WebPort:         "9020",
 			GrpcPort:        "9021",

@@ -37,12 +37,14 @@ func NewAuthService(cfg *config.TestConfig) testcontainers.GenericContainerReque
 			Env: map[string]string{
 				"NAME":             cfg.AuthService.Name,
 				"ADDRESS":          cfg.AuthService.Address,
+				"PORT":             cfg.AuthService.WebPort,
 				"GRPC_PORT":        cfg.AuthService.GrpcPort,
 				"GRACEFUL_TIMEOUT": cfg.AuthService.GracefulTimeout,
 				"CONSUL_ADDRESS":   cfg.ConsulConfig.Address,
 				"REDIS_URL":        cfg.AuthService.RedisURL,
 			},
-			Networks: []string{cfg.Network},
+			ExposedPorts: []string{cfg.AuthService.WebPort},
+			Networks:     []string{cfg.Network},
 		},
 		Started: true,
 	}

@@ -1,4 +1,4 @@
-package integration_tests
+package errors
 
 import (
 	"errors"
@@ -9,24 +9,24 @@ import (
 	"testing"
 )
 
-func requireNotFoundError(t *testing.T, err error, subject, key string, value any) {
+func RequireNotFoundError(t *testing.T, err error, subject, key string, value any) {
 	msg := apperrors.NotFound(subject, key, value).Error()
 	requireAPIError(t, err, http.StatusNotFound, msg)
 }
 
-func requireUnauthorizedError(t *testing.T, err error, msg string) {
+func RequireUnauthorizedError(t *testing.T, err error, msg string) {
 	requireAPIError(t, err, http.StatusUnauthorized, msg)
 }
 
-func requireForbiddenError(t *testing.T, err error, msg string) {
+func RequireForbiddenError(t *testing.T, err error, msg string) {
 	requireAPIError(t, err, http.StatusForbidden, msg)
 }
 
-func requireBadRequestError(t *testing.T, err error, msg string) {
+func RequireBadRequestError(t *testing.T, err error, msg string) {
 	requireAPIError(t, err, http.StatusBadRequest, msg)
 }
 
-func requireAlreadyExistsError(t *testing.T, err error, subject, key string, value any) {
+func RequireAlreadyExistsError(t *testing.T, err error, subject, key string, value any) {
 	msg := apperrors.AlreadyExists(subject, key, value).Error()
 	requireAPIError(t, err, http.StatusConflict, msg)
 }

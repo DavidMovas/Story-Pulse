@@ -11,7 +11,7 @@ func NewConsulContainer(cfg *TestConfig) testcontainers.GenericContainerRequest 
 		ContainerRequest: testcontainers.ContainerRequest{
 			Name:           cfg.ConsulConfig.Name,
 			Image:          cfg.ConsulConfig.Image,
-			ExposedPorts:   []string{fmt.Sprintf("%s:%s", cfg.ConsulConfig.APIPort, cfg.ConsulConfig.APIPort)},
+			ExposedPorts:   []string{fmt.Sprintf("%s:%s", cfg.ConsulConfig.APIPort, "8500")},
 			Networks:       []string{cfg.Network},
 			NetworkAliases: map[string][]string{cfg.Network: {"consul"}},
 		},

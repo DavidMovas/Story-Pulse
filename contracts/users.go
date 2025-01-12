@@ -42,12 +42,3 @@ type UserDetails struct {
 type GetUserByIDRequest struct {
 	ID int `json:"-" param:"userId" validate:"required"`
 }
-
-type CreateUserRequest struct {
-	Email     string  `json:"email" validate:"email"`
-	Password  string  `json:"password" validate:"password"`
-	Username  string  `json:"username" validate:"username"`
-	AvatarURL *string `json:"avatarUrl"`
-	FullName  *string `json:"fullName"`
-	Bio       *string `json:"bio"`
-}
