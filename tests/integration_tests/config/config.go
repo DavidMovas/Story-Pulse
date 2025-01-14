@@ -8,7 +8,7 @@ type TestConfig struct {
 	Network         string
 	GatewayConfig   *GatewayConfig
 	ConsulConfig    *ConsulConfig
-	UsersServiceCfg *UsersServiceConfig
+	UsersServiceCfg *UsersService
 	AuthService     *AuthService
 }
 
@@ -22,8 +22,8 @@ func NewTestConfig() *TestConfig {
 			GrpcPort:        "9001",
 			GracefulTimeout: defaultGracefulTimeout,
 
-			UsersServicePath: "users-service",
-			AuthServicePath:  "auth-service",
+			UsersServicePath: "users-service_test",
+			AuthServicePath:  "auth-service_test",
 		},
 		ConsulConfig: &ConsulConfig{
 			Name:    "consul_test",
@@ -31,7 +31,7 @@ func NewTestConfig() *TestConfig {
 			Address: "consul:8500",
 			APIPort: "9500",
 		},
-		UsersServiceCfg: &UsersServiceConfig{
+		UsersServiceCfg: &UsersService{
 			Name:            "users-service_test",
 			Address:         "users-service_test",
 			Image:           "story-pulse-users-service",
@@ -54,6 +54,8 @@ func NewTestConfig() *TestConfig {
 			WebPort:         "9020",
 			GrpcPort:        "9021",
 			GracefulTimeout: defaultGracefulTimeout,
+
+			UsersServicePath: "users-service_test",
 
 			RedisName:         "auth-service-redis_test",
 			RedisImage:        "redis:7.4-alpine",
@@ -82,7 +84,7 @@ type ConsulConfig struct {
 	APIPort string
 }
 
-type UsersServiceConfig struct {
+type UsersService struct {
 	Name            string
 	Address         string
 	Image           string
@@ -109,6 +111,9 @@ type AuthService struct {
 	GrpcPort        string
 	RedisURL        string
 	GracefulTimeout string
+
+	// Services
+	UsersServicePath string
 
 	// Redis
 	RedisName         string

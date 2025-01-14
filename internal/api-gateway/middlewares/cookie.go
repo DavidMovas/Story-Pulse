@@ -39,7 +39,7 @@ func RefreshTokenToCookieMiddleware() func(next http.Handler) http.Handler {
 			next.ServeHTTP(res, r)
 
 			if res.statusCode == http.StatusOK || res.statusCode == 0 {
-				var resp map[string]interface{}
+				var resp map[string]any
 				if err := json.Unmarshal(res.body.Bytes(), &resp); err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 				}

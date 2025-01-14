@@ -6,7 +6,6 @@ import (
 	"story-pulse/tests/integration_tests/config"
 	"story-pulse/tests/integration_tests/modules"
 	"testing"
-	"time"
 )
 
 func TestEcosystem(t *testing.T) {
@@ -21,6 +20,4 @@ func runServer(t *testing.T, cfg *config.TestConfig) {
 
 	modules.AuthServiceTest(t, c, cfg)
 	modules.UsersServiceTest(t, c, cfg)
-
-	time.Sleep(time.Second * 10)
 }

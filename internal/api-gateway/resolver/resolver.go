@@ -155,6 +155,10 @@ func (r *Resolver) refreshAddresses() {
 }
 
 func (r *Resolver) addressSelection(state resolver.State) resolver.State {
+	if r.addresses == nil {
+		return resolver.State{}
+	}
+
 	if len(r.addresses) == 1 {
 		selected := r.addresses[0]
 		state.Addresses = []resolver.Address{selected}

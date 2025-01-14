@@ -10,7 +10,7 @@ type RegisterUserRequest struct {
 }
 
 type RegisterUserResponse struct {
-	User         *User  `json:"user"`
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
+	User         *User  `json:"user,omitempty"`
+	AccessToken  string `json:"accessToken,omitempty"`
+	RefreshToken string `json:"refreshToken,omitempty"`
 }

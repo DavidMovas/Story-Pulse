@@ -43,7 +43,7 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	sugar := logger.Sugar().WithOptions(zap.WithCaller(false))
 
 	usersClient, err := client.CreateServiceClient[v1.UsersServiceClient](
-		"users-service",
+		cfg.UsersServicePath,
 		v1.NewUsersServiceClient,
 		grpc.WithTransportCredentials(
 			insecure.NewCredentials(),

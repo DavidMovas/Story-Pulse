@@ -124,7 +124,10 @@ func (r *Resolver) refreshAddresses() {
 }
 
 func (r *Resolver) addressSelection() resolver.State {
-	if len(r.addresses) < 2 {
+	if r.addresses == nil {
+		return resolver.State{}
+	}
+	if len(r.addresses) == 1 {
 		return resolver.State{Addresses: r.addresses}
 	}
 

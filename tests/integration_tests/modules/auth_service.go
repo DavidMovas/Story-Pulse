@@ -16,11 +16,13 @@ func AuthServiceTest(t *testing.T, client *client.Client, _ *config.TestConfig) 
 			Password: "testPASS123!@",
 		}
 		res, err := client.RegisterUser(req)
+
+		t.Logf("RESPONSE: %v\n", res)
+		t.Logf("RESPONSE: %v\n", res.User)
+
 		require.NoError(t, err)
 		require.NotEmpty(t, res.User)
 		require.NotEmpty(t, res.AccessToken)
 		require.NotEmpty(t, res.RefreshToken)
-
-		t.Logf("RESPONSE: %v\n", res)
 	})
 }
