@@ -2,8 +2,8 @@ package middlewares
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
-	jsoniter "github.com/json-iterator/go"
 	"google.golang.org/grpc/metadata"
 	"net/http"
 	"strconv"
@@ -40,7 +40,6 @@ func RefreshTokenToCookieMiddleware() func(next http.Handler) http.Handler {
 
 			if res.statusCode == http.StatusOK || res.statusCode == 0 {
 				var resp map[string]any
-				json := jsoniter.ConfigCompatibleWithStandardLibrary
 				if err := json.Unmarshal(res.body.Bytes(), &resp); err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 				}

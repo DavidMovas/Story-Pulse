@@ -3,7 +3,7 @@ package mux
 import (
 	"github.com/go-chi/chi/v5"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"story-pulse/internal/api-gateway/middlewares"
+	. "story-pulse/internal/api-gateway/middlewares"
 )
 
 const (
@@ -13,15 +13,15 @@ const (
 
 func Register(httpMux *chi.Mux, grpcMux *runtime.ServeMux) {
 	httpMux.Route(authApiPrefix, func(r chi.Router) {
-		r.With(middlewares.RefreshTokenToCookieMiddleware()).Route("/register", func(r chi.Router) {
+		r.With(RefreshTokenToCookieMiddleware()).Route("/register", func(r chi.Router) {
 			r.Mount("/", grpcMux)
 		})
 
-		r.With(middlewares.RefreshTokenToCookieMiddleware()).Route("/login", func(r chi.Router) {
+		r.With(RefreshTokenToCookieMiddleware()).Route("/login", func(r chi.Router) {
 			r.Mount("/", grpcMux)
 		})
 
-		r.With(middlewares.RequiredCookieMiddleware()).Route("/refresh", func(r chi.Router) {
+		r.With(RequiredCookieMiddleware()).Route("/refresh", func(r chi.Router) {
 			r.Mount("/", grpcMux)
 		})
 
@@ -29,7 +29,7 @@ func Register(httpMux *chi.Mux, grpcMux *runtime.ServeMux) {
 	})
 
 	httpMux.Route(usersApiPrefix, func(r chi.Router) {
-		r.With(middlewares.AuthAndIDMiddleware()).Route("/{id}", func(r chi.Router) {
+		r.With(AuthAndIDMiddleware()).Route("/{id}", func(r chi.Router) {
 			r.Mount("/", grpcMux)
 		})
 
