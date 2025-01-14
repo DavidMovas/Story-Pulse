@@ -3,13 +3,11 @@ package helpers
 import (
 	"story-pulse/contracts"
 	grpc "story-pulse/internal/shared/grpc/v1"
-	"strconv"
 )
 
 func ToGRPC(u contracts.User) *grpc.User {
-	id, _ := strconv.Atoi(u.ID)
 	return &grpc.User{
-		Id:          int64(id),
+		Id:          int64(u.ID),
 		Email:       u.Email,
 		AvatarUrl:   u.AvatarURL,
 		Username:    u.Username,

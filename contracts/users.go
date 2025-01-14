@@ -3,7 +3,7 @@ package contracts
 import "time"
 
 type User struct {
-	ID          string     `json:"id"`
+	ID          int        `json:"id"`
 	Email       string     `json:"email"`
 	AvatarURL   *string    `json:"avatarUrl,omitempty"`
 	Username    string     `json:"username"`
