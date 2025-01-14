@@ -10,6 +10,7 @@ var _ config.ServiceConfig = (*Config)(nil)
 
 type Config struct {
 	config.DefaultConfig
+	UsersServicePath      string        `env:"USERS_SERVICE_PATH" envDefault:"users-service"`
 	Secret                string        `env:"JWT_SECRET" envDefault:"secret"`
 	AccessExpirationTime  time.Duration `env:"JWT_ACCESS_EXPIRATION_TIME" envDefault:"15m"`
 	RefreshExpirationTime time.Duration `env:"JWT_REFRESH_EXPIRATION_TIME" envDefault:"168h"`

@@ -43,7 +43,7 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	sugar := logger.Sugar().WithOptions(zap.WithCaller(false))
 
 	usersClient, err := client.CreateServiceClient[v1.UsersServiceClient](
-		"users-service",
+		cfg.UsersServicePath,
 		v1.NewUsersServiceClient,
 		grpc.WithTransportCredentials(
 			insecure.NewCredentials(),
@@ -135,6 +135,7 @@ func (s *Server) Port() (int, error) {
 func (s *Server) register() error {
 	consulCfg := api.DefaultConfig()
 	consulCfg.Address = s.cfg.ConsulAddr
+
 	check := &api.AgentServiceCheck{
 		HTTP:                           fmt.Sprintf("http://%s:%d/health", s.cfg.Address, s.cfg.WebPort),
 		Interval:                       "10s",
@@ -153,10 +154,7 @@ func (s *Server) register() error {
 }
 
 func connectDB(ctx context.Context, cfg *config.Config) (*redis.Client, error) {
-	rdb := redis.NewClient(&redis.Options{
-		Addr: cfg.RedisURL,
-	})
-
+	rdb := redis.NewClient(&redis.Options{Addr: cfg.RedisURL})
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		return nil, err
 	}

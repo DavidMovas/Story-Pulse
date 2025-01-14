@@ -12,7 +12,8 @@ services:
       GRPC_PORT: ${AUTH_SERVICE_GRPC_PORT}
       GRACEFUL_TIMEOUT: ${SERVICES_GRACEFUL_TIMEOUT}
       CONSUL_ADDRESS: http://consul:8500
-      REDIS_URL: auth_redis:${REDIS_DB_PORT}
+      USERS_SERVICE_PATH: users-service
+      REDIS_URL: auth_redis:6379
     networks:
       - gateway
       - default

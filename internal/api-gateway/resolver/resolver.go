@@ -10,19 +10,19 @@ import (
 	"time"
 )
 
-func init() { resolver.Register(&resolverBuilder{}) }
+func init() { resolver.Register(&Builder{}) }
 
 const (
 	tickerTimeout = time.Second * 15
 	consulAddress = "http://consul:8500"
 )
 
-var _ resolver.Builder = (*resolverBuilder)(nil)
+var _ resolver.Builder = (*Builder)(nil)
 var _ resolver.Resolver = (*Resolver)(nil)
 
-type resolverBuilder struct{}
+type Builder struct{}
 
-func (*resolverBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
+func (*Builder) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
 	r, err := NewResolver(target, cc, opts)
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func (*resolverBuilder) Build(target resolver.Target, cc resolver.ClientConn, op
 	return r, nil
 }
 
-func (*resolverBuilder) Scheme() string {
+func (*Builder) Scheme() string {
 	return "dynamic"
 }
 
@@ -155,6 +155,10 @@ func (r *Resolver) refreshAddresses() {
 }
 
 func (r *Resolver) addressSelection(state resolver.State) resolver.State {
+	if r.addresses == nil {
+		return resolver.State{}
+	}
+
 	if len(r.addresses) == 1 {
 		selected := r.addresses[0]
 		state.Addresses = []resolver.Address{selected}
