@@ -66,12 +66,16 @@ func (h *Handler) LoginUser(ctx context.Context, request *v1.LoginRequest) (*v1.
 		return nil, status.Error(codes.InvalidArgument, "email or username required")
 	}
 
-	if err := validation.Validate("email", *request.Email, false); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	if request.Email != nil {
+		if err := validation.Validate("email", *request.Email, false); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		}
 	}
 
-	if err := validation.Validate("username", *request.Username, false); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	if request.Username != nil {
+		if err := validation.Validate("username", *request.Username, false); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		}
 	}
 
 	if err := validation.Validate("password", request.Password, true); err != nil {

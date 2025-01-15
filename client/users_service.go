@@ -9,7 +9,7 @@ func (c *Client) GetUserByID(req *contracts.GetUserByIDRequest) (*contracts.User
 
 	_, err := c.client.R().
 		SetResult(&user).
-		Get(c.path("/v1/users/%d", req.ID))
+		Get(c.path("/v1/users/%s", req.ID))
 
 	return user, err
 }

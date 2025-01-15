@@ -98,7 +98,7 @@ func NotFound(subject, key string, value any) *Error {
 }
 
 func AlreadyExists(subject, key string, value any) *Error {
-	return newError(AlreadyExistsCode, fmt.Sprintf("%s %s: %v already extists", subject, key, value))
+	return newError(AlreadyExistsCode, fmt.Sprintf("%s %s: %v already exists", subject, key, value))
 }
 
 func Unauthorized(message string) *Error {

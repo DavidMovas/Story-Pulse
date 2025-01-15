@@ -40,5 +40,5 @@ type UserDetails struct {
 }
 
 type GetUserByIDRequest struct {
-	ID int `json:"-" param:"userId" validate:"required"`
+	ID string `json:"-" param:"userId" validate:"required"`
 }

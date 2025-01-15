@@ -145,9 +145,9 @@ func (r *Repository) CreateUser(ctx context.Context, user *UserWithPassword) (*U
 
 	switch {
 	case dbx.IsUniqueViolation(err, "email"):
-		return nil, status.Errorf(codes.AlreadyExists, "user with email %s already exists", user.Email)
+		return nil, status.Errorf(codes.AlreadyExists, "user email: %s already exists", user.Email)
 	case dbx.IsUniqueViolation(err, "username"):
-		return nil, status.Errorf(codes.AlreadyExists, "user with username %s already exists", user.Username)
+		return nil, status.Errorf(codes.AlreadyExists, "user username: %s already exists", user.Username)
 	case err != nil:
 		return nil, status.Errorf(codes.Internal, "cannot create user: %v", err)
 	}
