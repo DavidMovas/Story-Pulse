@@ -56,9 +56,45 @@ func (s *Service) Register(ctx context.Context, req *v1.CreateUserRequest) (*v1.
 		RefreshToken: refreshToken,
 	}
 
-	s.logger.Infow("Register success", "id", res.User.Id, "role", res.User.Role, "email", res.User.Email)
-	s.logger.Infow("Access token", "token", accessToken)
-	s.logger.Infow("Refresh token", "token", refreshToken)
+	return result, nil
+}
+
+func (s *Service) Login(ctx context.Context, req *v1.LoginRequest) (*v1.LoginResponse, error) {
+	var res *v1.LoginUserResponse
+	var err error
+	if req.Email != nil {
+		res, err = s.users.LoginUserByEmail(ctx, &v1.LoginUserByEmailRequest{Email: *req.Email, Password: req.Password})
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	} else if req.Username != nil {
+		res, err = s.users.LoginUserByUsername(ctx, &v1.LoginUserByUsernameRequest{Username: *req.Username, Password: req.Password})
+	}
+
+	if res == nil {
+		return nil, status.Error(codes.NotFound, "User not found")
+	}
+
+	accessToken, err := s.jwt.GenerateToken(int(res.User.Id), res.User.Role)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	refreshToken, err := s.jwt.GenerateRefreshToken()
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	err = s.repo.SaveRefreshToken(ctx, int(res.User.Id), res.User.Role, refreshToken, s.jwt.GetRefreshExpiration())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	result := &v1.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		User:         res.User,
+	}
 
 	return result, nil
 }

@@ -66,11 +66,11 @@ func (h *Handler) LoginUser(ctx context.Context, request *v1.LoginRequest) (*v1.
 		return nil, status.Error(codes.InvalidArgument, "email or username required")
 	}
 
-	if err := validation.Validate("email", request.Email, false); err != nil {
+	if err := validation.Validate("email", *request.Email, false); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	if err := validation.Validate("username", request.Username, false); err != nil {
+	if err := validation.Validate("username", *request.Username, false); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
@@ -78,7 +78,12 @@ func (h *Handler) LoginUser(ctx context.Context, request *v1.LoginRequest) (*v1.
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	return &v1.LoginResponse{}, nil
+	res, err := h.service.Login(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 func (h *Handler) RefreshToken(ctx context.Context, request *v1.RefreshTokenRequest) (*v1.RefreshTokenResponse, error) {

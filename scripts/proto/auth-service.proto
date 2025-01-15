@@ -50,6 +50,7 @@ message LoginRequest {
 }
 
 message LoginResponse {
+  common.v1.User user = 1;
   string access_token = 2;
   string refresh_token = 3;
 }

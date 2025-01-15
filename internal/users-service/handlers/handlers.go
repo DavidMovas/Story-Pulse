@@ -32,7 +32,7 @@ func NewHandler(service *Service, logger *zap.SugaredLogger) *Handler {
 }
 
 func (h *Handler) GetUserByID(ctx context.Context, request *grpc.GetUserByIDRequest) (*grpc.GetUserByIDResponse, error) {
-	userId := int(request.GetId())
+	userId := int(request.Id)
 	user, err := h.service.GetUserByID(ctx, userId)
 	if err != nil {
 		return nil, err
@@ -41,6 +41,24 @@ func (h *Handler) GetUserByID(ctx context.Context, request *grpc.GetUserByIDRequ
 	h.logger.Info("GetUserByID invoked")
 
 	return &grpc.GetUserByIDResponse{User: user.ToGRPC()}, nil
+}
+
+func (h *Handler) LoginUserByEmail(ctx context.Context, request *grpc.LoginUserByEmailRequest) (*grpc.LoginUserResponse, error) {
+	user, err := h.service.LoginUserByEmail(ctx, request.Email, request.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	return &grpc.LoginUserResponse{User: user.ToGRPC()}, nil
+}
+
+func (h *Handler) LoginUserByUsername(ctx context.Context, request *grpc.LoginUserByUsernameRequest) (*grpc.LoginUserResponse, error) {
+	user, err := h.service.LoginUserByUsername(ctx, request.Username, request.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	return &grpc.LoginUserResponse{User: user.ToGRPC()}, nil
 }
 
 func (h *Handler) CreateUser(ctx context.Context, request *grpc.CreateUserRequest) (*grpc.CreateUserResponse, error) {

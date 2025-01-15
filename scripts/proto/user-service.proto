@@ -14,6 +14,9 @@ service UsersService {
     };
   }
 
+  rpc LoginUserByEmail(LoginUserByEmailRequest) returns (LoginUserResponse);
+  rpc LoginUserByUsername(LoginUserByUsernameRequest) returns (LoginUserResponse);
+
   rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
 }
 
@@ -22,6 +25,20 @@ message GetUserByIDRequest {
 }
 
 message GetUserByIDResponse {
+  common.v1.User user = 1;
+}
+
+message LoginUserByEmailRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginUserByUsernameRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginUserResponse {
   common.v1.User user = 1;
 }
 
