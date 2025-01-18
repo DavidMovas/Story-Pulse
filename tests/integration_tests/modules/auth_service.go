@@ -110,27 +110,11 @@ func AuthServiceTest(t *testing.T, client *client.Client, _ *config.TestConfig) 
 		errors.RequireAlreadyExistsError(t, err, "user", "email", req.Email)
 	})
 
-	t.Run("auth_service.Login: email or username required", func(t *testing.T) {
-		req := &contracts.LoginUserRequest{
-			Password: John.Password,
-		}
-		_, err := client.LoginUser(req)
-		errors.RequireBadRequestError(t, err, "email or username required")
-	})
-
-	t.Run("auth_service.Login: password required", func(t *testing.T) {
-		req := &contracts.LoginUserRequest{
-			Email: John.Email,
-		}
-		_, err := client.LoginUser(req)
-		errors.RequireBadRequestError(t, err, "password is required")
-	})
-
 	t.Run("auth_service.Login: success", func(t *testing.T) {
 		req := &contracts.LoginUserRequest{
-			Email:    John.Email,
-			Username: John.Username,
-			Password: John.Password,
+			Email:    &John.Email,
+			Username: &John.Username,
+			Password: &John.Password,
 		}
 
 		res, err := client.LoginUser(req)
@@ -143,5 +127,21 @@ func AuthServiceTest(t *testing.T, client *client.Client, _ *config.TestConfig) 
 		require.Equal(t, John.Username, res.User.Username)
 
 		John.User = res.User
+	})
+
+	t.Run("auth_service.Login: password required", func(t *testing.T) {
+		req := &contracts.LoginUserRequest{
+			Email: &John.Email,
+		}
+		_, err := client.LoginUser(req)
+		errors.RequireBadRequestError(t, err, "password is required")
+	})
+
+	t.Run("auth_service.Login: email or username required", func(t *testing.T) {
+		req := &contracts.LoginUserRequest{
+			Password: &John.Password,
+		}
+		_, err := client.LoginUser(req)
+		errors.RequireBadRequestError(t, err, "email or username required")
 	})
 }

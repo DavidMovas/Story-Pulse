@@ -52,6 +52,8 @@ func UsersServiceTest(t *testing.T, client *client.Client, _ *config.TestConfig)
 		req := &contracts.GetUserByIDRequest{ID: "100"}
 		_, err := client.GetUserByID(req)
 
+		t.Logf("ERROR: %v\n", err)
+
 		errors.RequireNotFoundError(t, err, "user", "id", req.ID)
 	})
 
@@ -63,5 +65,7 @@ func UsersServiceTest(t *testing.T, client *client.Client, _ *config.TestConfig)
 		require.Equal(t, John.ID, res.ID)
 		require.Equal(t, John.Email, res.Email)
 		require.Equal(t, John.Username, res.Username)
+
+		John.User = res
 	})
 }

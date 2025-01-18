@@ -16,9 +16,9 @@ type RegisterUserResponse struct {
 }
 
 type LoginUserRequest struct {
-	Email    string `json:"email" validate:"email"`
-	Username string `json:"username" validate:"username"`
-	Password string `json:"password" validate:"password"`
+	Email    *string `json:"email,omitempty" validate:"email"`
+	Username *string `json:"username,omitempty" validate:"username"`
+	Password *string `json:"password,omitempty" validate:"password"`
 }
 
 type LoginUserResponse struct {
