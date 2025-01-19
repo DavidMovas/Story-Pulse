@@ -2,7 +2,7 @@ package config
 
 import (
 	"brain-wave/internal/shared/config"
-	"math/
+	"math/rand/v2"
 	"time"
 )
 

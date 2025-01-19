@@ -2,17 +2,17 @@ package auth
 
 import (
 	v1 "brain-wave/internal/shared/grpc/v1"
-	
+	"go.uber.org/zap"
 )
 
 type Interceptor struct {
 	client v1.AuthServiceClient
 	logger *zap.SugaredLogger
-	opts   map[string]*AuthLevelOption
+	opts   map[string]*LevelOption
 }
 
-func NewAuthInterceptor(client v1.AuthServiceClient, pattern string, logger *zap.SugaredLogger, options []*AuthLevelOption) *Interceptor {
-	var opts = make(map[string]*AuthLevelOption, len(options))
+func NewAuthInterceptor(client v1.AuthServiceClient, pattern string, logger *zap.SugaredLogger, options []*LevelOption) *Interceptor {
+	var opts = make(map[string]*LevelOption, len(options))
 	for _, option := range options {
 		opts[pattern+option.MethodName] = option
 	}

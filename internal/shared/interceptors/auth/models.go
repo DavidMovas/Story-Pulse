@@ -2,7 +2,7 @@ package auth
 
 import "slices"
 
-type AuthLevelOption struct {
+type LevelOption struct {
 	MethodName string
 	AuthLevel  string
 	Self       bool

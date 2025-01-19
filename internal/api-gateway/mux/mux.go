@@ -1,7 +1,7 @@
 package mux
 
 import (
-	. "brain-wave/internal/api
+	. "brain-wave/internal/api-gateway/middlewares"
 	"github.com/go-chi/chi/v5"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 )

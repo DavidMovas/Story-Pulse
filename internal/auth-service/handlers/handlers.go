@@ -90,7 +90,7 @@ func (h *Handler) LoginUser(ctx context.Context, request *v1.LoginRequest) (*v1.
 	return res, nil
 }
 
-func (h *Handler) RefreshToken(ctx context.Context, request *v1.RefreshTokenRequest) (*v1.RefreshTokenResponse, error) {
+func (h *Handler) RefreshToken(ctx context.Context, _ *v1.RefreshTokenRequest) (*v1.RefreshTokenResponse, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "metadata is not provided")

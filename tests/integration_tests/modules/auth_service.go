@@ -5,7 +5,7 @@ import (
 	"brain-wave/contracts"
 	"brain-wave/tests/integration_tests/config"
 	"brain-wave/tests/integration_tests/errors"
-	"github.c
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 

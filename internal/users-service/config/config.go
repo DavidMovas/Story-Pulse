@@ -2,7 +2,7 @@ package config
 
 import (
 	"brain-wave/internal/shared/config"
-	
+	"math/rand/v2"
 )
 
 var _ config.ServiceConfig = (*Config)(nil)

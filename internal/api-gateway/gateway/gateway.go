@@ -1,7 +1,7 @@
 package gateway
 
 import (
-	"brain-wa
+	"brain-wave/internal/api-gateway/resolver"
 	"context"
 	"errors"
 	"fmt"

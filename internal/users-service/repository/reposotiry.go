@@ -155,10 +155,10 @@ func (r *Repository) CreateUser(ctx context.Context, user *UserWithPassword) (*U
 	return user.User, nil
 }
 
-func (r *Repository) UpdateUser(ctx context.Context, user *User) error {
+func (r *Repository) UpdateUser(_ context.Context, _ *User) error {
 	return nil
 }
 
-func (r *Repository) DeleteUser(ctx context.Context, userId int) error {
+func (r *Repository) DeleteUser(_ context.Context, _ int) error {
 	return nil
 }

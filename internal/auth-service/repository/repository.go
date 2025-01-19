@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"brain-wa
+	"brain-wave/internal/auth-service/models"
 	"context"
 	"encoding/json"
 	"errors"

@@ -2,7 +2,7 @@ package handlers
 
 import (
 	grpc "brain-wave/internal/shared/grpc/v1"
-	auth "brain-wave/internal/shared/interceptors/auth"
+	"brain-wave/internal/shared/interceptors/auth"
 	. "brain-wave/internal/users-service/models"
 	. "brain-wave/internal/users-service/service"
 	"context"
@@ -15,7 +15,7 @@ var _ grpc.UsersServiceServer = (*Handler)(nil)
 type Handler struct {
 	service       *Service
 	logger        *zap.SugaredLogger
-	authLevelOpts []*auth.AuthLevelOption
+	authLevelOpts []*auth.LevelOption
 
 	grpc.UnimplementedUsersServiceServer
 }
@@ -24,7 +24,7 @@ func NewHandler(service *Service, logger *zap.SugaredLogger) *Handler {
 	return &Handler{
 		service: service,
 		logger:  logger,
-		authLevelOpts: []*auth.AuthLevelOption{
+		authLevelOpts: []*auth.LevelOption{
 			{"GetUserByID", "user", false},
 			{"CreateUser", "admin", false},
 		},
@@ -75,6 +75,6 @@ func (h *Handler) Health(writer http.ResponseWriter, _ *http.Request) {
 	_, _ = writer.Write([]byte("ok"))
 }
 
-func (h *Handler) GetAuthOptions() []*auth.AuthLevelOption {
+func (h *Handler) GetAuthOptions() []*auth.LevelOption {
 	return h.authLevelOpts
 }

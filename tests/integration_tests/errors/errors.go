@@ -2,7 +2,7 @@ package errors
 
 import (
 	"brain-wave/client"
-	apperrors "brain-wave/inte
+	apperrors "brain-wave/internal/shared/error"
 	"errors"
 	"github.com/stretchr/testify/require"
 	"net/http"

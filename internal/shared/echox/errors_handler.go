@@ -2,14 +2,11 @@ package echox
 
 import (
 	"brain-wave/contracts"
+	apperrors "brain-wave/internal/shared/error"
 	"brain-wave/internal/shared/log"
 	"errors"
-	"net/http"
-
-
-apperrors "brain-wave/internal
 	"github.com/labstack/echo/v4"
-	apperrors "brain-wave/internal/shared/error"
+	"net/http"
 )
 
 type HTTPError struct {
@@ -29,8 +26,7 @@ func ErrorHandler(err error, c echo.Context) {
 	}
 
 	httpError := contracts.HTTPError{
-		Message:    appError.SafeError(),
-		IncidentID: appError.IncidentID,
+		Message: appError.SafeError(),
 	}
 
 	logger := log.FromContext(c.Request().Context())
