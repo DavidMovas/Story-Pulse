@@ -2,7 +2,7 @@ package repository
 
 import (
 	"brain-wave/internal/shared/dbx"
-	. "brain-w
+	. "brain-wave/internal/users-service/models"
 	"context"
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"

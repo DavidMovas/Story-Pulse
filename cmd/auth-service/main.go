@@ -1,13 +1,15 @@
 package main
 
 import (
-	srvConfig "brain-wave/inter
+	srvConfig "brain-wave/internal/auth-service/config"
+	"brain-wave/internal/auth-service/server"
+	"brain-wave/internal/shared/config"
 	"context"
 	"log/slog"
 	"os"
 	"os/signal"
-	srvConfig "brain-wave/internal/auth-service/config"
-	"brain-wave/internal/auth-service/server"
+	"syscall"
+	"time"
 )
 
 func main() {

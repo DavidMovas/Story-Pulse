@@ -2,14 +2,15 @@ package handlers
 
 import (
 	"brain-wave/internal/auth-service/service"
-	v1 "brain-wave/i
+	v1 "brain-wave/internal/shared/grpc/v1"
+	"brain-wave/internal/shared/validation"
 	"context"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"net/http"
-	"brain-wave/internal/auth-service/service"
+)
 
 var _ v1.AuthServiceServer = (*Handler)(nil)
 

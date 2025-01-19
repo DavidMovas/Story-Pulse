@@ -28,7 +28,8 @@ type UserShort struct {
 
 type UserWithPassword struct {
 	*User
-	PasswordHash string `json:"passwordHash"`
+	PasswordHash string     `json:"passwordHash"`
+	UpdatedAt    *time.Time `json:"updatedAt"`
 }
 
 type UserDetails struct {

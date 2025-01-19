@@ -1,14 +1,15 @@
 package server
 
 import (
-	"brain-wave/inte
+	"brain-wave/internal/content-service/config"
+	"brain-wave/internal/content-service/handlers"
 	"context"
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
 	"net"
-	"brain-wave/internal/content-service/config"
+)
 
 type Server struct {
 	e      *echo.Echo

@@ -10,9 +10,6 @@ import (
 	"net/http"
 )
 
-var _
-)
-
 var _ grpc.UsersServiceServer = (*Handler)(nil)
 
 type Handler struct {

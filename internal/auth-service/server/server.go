@@ -6,7 +6,10 @@ import (
 	"brain-wave/internal/auth-service/repository"
 	srv "brain-wave/internal/auth-service/service"
 	"brain-wave/internal/shared/consul"
-	"b
+	"brain-wave/internal/shared/grpc/client"
+	v1 "brain-wave/internal/shared/grpc/v1"
+	net2 "brain-wave/internal/shared/net"
+	"brain-wave/internal/shared/resolver"
 	"context"
 	"errors"
 	"fmt"
@@ -18,9 +21,9 @@ import (
 	"google.golang.org/grpc/reflection"
 	"net"
 	"net/http"
-	"brain-wave/internal/auth-service/config"
-	"brain-wave/internal/auth-service/handlers"
-	"brain-wave/internal/auth-service/repository"
+)
+
+type Server struct {
 	grpcServer *grpc.Server
 	httpServer *http.Server
 	listener   net.Listener

@@ -4,7 +4,10 @@ import (
 	"brain-wave/internal/shared/consul"
 	v1 "brain-wave/internal/shared/grpc/v1"
 	net2 "brain-wave/internal/shared/net"
-	"brain-wave/internal/use
+	"brain-wave/internal/users-service/config"
+	"brain-wave/internal/users-service/handlers"
+	"brain-wave/internal/users-service/repository"
+	"brain-wave/internal/users-service/service"
 	"context"
 	"errors"
 	"fmt"
@@ -15,9 +18,9 @@ import (
 	"google.golang.org/grpc/reflection"
 	"net"
 	"net/http"
-	"brain-wave/internal/shared/consul"
-	v1 "brain-wave/internal/shared/grpc/v1"
-	net2 "brain-wave/internal/shared/net"
+)
+
+type Server struct {
 	grpcServer *grpc.Server
 	httpServer *http.Server
 	listener   net.Listener
