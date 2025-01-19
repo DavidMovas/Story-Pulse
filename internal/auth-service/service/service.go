@@ -1,14 +1,13 @@
 package service
 
 import (
+	"brain-wave/internal/auth-service/config"
+	"brain-wave/internal/auth-service/repository"
+	v1 "brain-wave/internal/shared/grpc/v1"
+	"brain-wave/internal/shared/jwt"
 	"context"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"story-pulse/internal/auth-service/config"
-	"story-pulse/internal/auth-service/repository"
-	v1 "story-pulse/internal/shared/grpc/v1"
-	"story-pulse/internal/shared/jwt"
+	"google.golang.org/grpc
 )
 
 type Service struct {

@@ -1,12 +1,12 @@
 package main
 
 import (
+	srvConfig "brain-wave/internal/api-gateway/config"
+	"brain-wave/internal/api-gateway/server"
+	"brain-wave/internal/shared/config"
 	"log/slog"
 	"os"
 	"os/signal"
-	srvConfig "story-pulse/internal/api-gateway/config"
-	"story-pulse/internal/api-gateway/server"
-	"story-pulse/internal/shared/config"
 	"syscall"
 )
 

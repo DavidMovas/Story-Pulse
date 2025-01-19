@@ -1,7 +1,7 @@
 package client
 
 import (
-	"story-pulse/contracts"
+	"brain-wave/contracts"
 )
 
 func (c *Client) RegisterUser(req *contracts.RegisterUserRequest) (*contracts.RegisterUserResponse, error) {

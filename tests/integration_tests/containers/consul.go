@@ -1,9 +1,9 @@
 package containers
 
 import (
+	. "brain-wave/tests/integration_tests/config"
 	"fmt"
 	"github.com/testcontainers/testcontainers-go"
-	. "story-pulse/tests/integration_tests/config"
 )
 
 func NewConsulContainer(cfg *TestConfig) testcontainers.GenericContainerRequest {

@@ -1,8 +1,8 @@
 package containers
 
 import (
+	"brain-wave/tests/integration_tests/config"
 	"github.com/testcontainers/testcontainers-go"
-	"story-pulse/tests/integration_tests/config"
 )
 
 func NewGateway(cfg *config.TestConfig) testcontainers.GenericContainerRequest {

@@ -1,13 +1,12 @@
 package service
 
 import (
+	. "brain-wave/internal/users-service/mo
 	"context"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	. "story-pulse/internal/users-service/models"
-	. "story-pulse/internal/users-service/repository"
-)
+	. "brain-wave/internal/users-service/models"
 
 type Service struct {
 	repo *Repository

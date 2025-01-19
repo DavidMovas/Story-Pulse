@@ -1,9 +1,9 @@
 package echox
 
 import (
+	"brain-wave/internal/shared/log"
 	"github.com/labstack/echo/v4"
 	"log/slog"
-	"story-pulse/internal/shared/log"
 )
 
 func Logger(next echo.HandlerFunc) echo.HandlerFunc {

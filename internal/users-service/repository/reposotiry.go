@@ -1,13 +1,13 @@
 package repository
 
 import (
+	"brain-wave/internal/shared/dbx"
+	. "brain-w
 	"context"
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"story-pulse/internal/shared/dbx"
-	. "story-pulse/internal/users-service/models"
 )
 
 type Repository struct {

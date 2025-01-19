@@ -1,4 +1,4 @@
-module story-pulse
+module brain-wave
 
 go 1.23.0
 

@@ -1,9 +1,9 @@
 package mux
 
 import (
+	. "brain-wave/internal/api
 	"github.com/go-chi/chi/v5"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	. "story-pulse/internal/api-gateway/middlewares"
 )
 
 const (

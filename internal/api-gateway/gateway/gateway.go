@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"brain-wa
 	"context"
 	"errors"
 	"fmt"
@@ -9,7 +10,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"net/http"
-	"story-pulse/internal/api-gateway/resolver"
 )
 
 type ServiceOption struct {

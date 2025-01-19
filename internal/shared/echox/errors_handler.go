@@ -1,13 +1,15 @@
 package echox
 
 import (
+	"brain-wave/contracts"
+	"brain-wave/internal/shared/log"
 	"errors"
 	"net/http"
-	"story-pulse/contracts"
-	"story-pulse/internal/shared/log"
 
+
+apperrors "brain-wave/internal
 	"github.com/labstack/echo/v4"
-	apperrors "story-pulse/internal/shared/error"
+	apperrors "brain-wave/internal/shared/error"
 )
 
 type HTTPError struct {

@@ -1,6 +1,10 @@
 package server
 
 import (
+	"brain-wave/internal/shared/consul"
+	v1 "brain-wave/internal/shared/grpc/v1"
+	net2 "brain-wave/internal/shared/net"
+	"brain-wave/internal/use
 	"context"
 	"errors"
 	"fmt"
@@ -11,16 +15,9 @@ import (
 	"google.golang.org/grpc/reflection"
 	"net"
 	"net/http"
-	"story-pulse/internal/shared/consul"
-	v1 "story-pulse/internal/shared/grpc/v1"
-	net2 "story-pulse/internal/shared/net"
-	"story-pulse/internal/users-service/config"
-	"story-pulse/internal/users-service/handlers"
-	"story-pulse/internal/users-service/repository"
-	"story-pulse/internal/users-service/service"
-)
-
-type Server struct {
+	"brain-wave/internal/shared/consul"
+	v1 "brain-wave/internal/shared/grpc/v1"
+	net2 "brain-wave/internal/shared/net"
 	grpcServer *grpc.Server
 	httpServer *http.Server
 	listener   net.Listener

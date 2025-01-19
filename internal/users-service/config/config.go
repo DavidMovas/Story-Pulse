@@ -1,8 +1,8 @@
 package config
 
 import (
-	"math/rand/v2"
-	"story-pulse/internal/shared/config"
+	"brain-wave/internal/shared/config"
+	
 )
 
 var _ config.ServiceConfig = (*Config)(nil)

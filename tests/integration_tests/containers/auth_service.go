@@ -1,10 +1,10 @@
 package containers
 
 import (
+	"brain-wave/tests/integration_tests/config"
 	"fmt"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"story-pulse/tests/integration_tests/config"
 )
 
 func NewAuthServiceRedis(cfg *config.TestConfig) testcontainers.GenericContainerRequest {

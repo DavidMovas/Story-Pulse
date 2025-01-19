@@ -1,12 +1,12 @@
 package repository
 
 import (
+	"brain-wa
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/redis/go-redis/v9"
-	"story-pulse/internal/auth-service/models"
 	"time"
 )
 

@@ -1,7 +1,7 @@
 package client
 
 import (
-	"story-pulse/contracts"
+	"brain-wave/contracts"
 )
 
 type userWrapper struct {

@@ -6,19 +6,21 @@ CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(128) UNIQUE NOT NULL,
     avatar_url VARCHAR(255),
-    username VARCHAR(32) UNIQUE NOT NULL,
     full_name VARCHAR(64),
     bio VARCHAR(2000),
-    pass_hash VARCHAR(64) NOT NULL,
     last_login_at TIMESTAMP,
     role role NOT NULL DEFAULT 'user',
     is_verified BOOLEAN DEFAULT false,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP,
     deleted_at TIMESTAMP
 );
 
+CREATE INDEX idx_users_email ON users(email);
+
 ---- create above / drop below ----
 
+DROP INDEX idx_users_email;
 DROP TABLE IF EXISTS users;
 DROP TYPE IF EXISTS role;
 

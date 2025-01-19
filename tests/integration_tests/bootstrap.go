@@ -1,6 +1,7 @@
 package integration_tests
 
 import (
+	"brain-wave/test
 	"context"
 	"fmt"
 	"github.com/docker/go-connections/nat"
@@ -9,9 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/network"
-	"story-pulse/tests/integration_tests/config"
-	"story-pulse/tests/integration_tests/containers"
-	"testing"
+	"brain-wave/tests/integration_tests/config"
 	"time"
 )
 

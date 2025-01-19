@@ -1,11 +1,11 @@
 package errors
 
 import (
+	"brain-wave/client"
+	apperrors "brain-wave/inte
 	"errors"
 	"github.com/stretchr/testify/require"
 	"net/http"
-	"story-pulse/client"
-	apperrors "story-pulse/internal/shared/error"
 	"testing"
 )
 

@@ -1,10 +1,10 @@
 package integration_tests
 
 import (
+	"brain-wave/client"
+	"brain-wave/tests/integration_tests/config"
+	"brain-wave/tests/integration_tests/modules"
 	"context"
-	"story-pulse/client"
-	"story-pulse/tests/integration_tests/config"
-	"story-pulse/tests/integration_tests/modules"
 	"testing"
 )
 

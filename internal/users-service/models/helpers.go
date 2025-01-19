@@ -1,8 +1,8 @@
 package models
 
 import (
-	grpc "story-pulse/internal/shared/grpc/v1"
-	"story-pulse/internal/shared/helpers"
+	grpc "brain-wave/internal/shared/grpc/v1"
+	"brain-wave/internal/shared/helpers"
 )
 
 func (u *User) ToGRPC() *grpc.User {

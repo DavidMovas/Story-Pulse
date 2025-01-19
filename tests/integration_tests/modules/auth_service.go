@@ -1,11 +1,11 @@
 package modules
 
 import (
-	"github.com/stretchr/testify/require"
-	"story-pulse/client"
-	"story-pulse/contracts"
-	"story-pulse/tests/integration_tests/config"
-	"story-pulse/tests/integration_tests/errors"
+	"brain-wave/client"
+	"brain-wave/contracts"
+	"brain-wave/tests/integration_tests/config"
+	"brain-wave/tests/integration_tests/errors"
+	"github.c
 	"testing"
 )
 

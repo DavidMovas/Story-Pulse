@@ -1,6 +1,12 @@
 package server
 
 import (
+	"brain-wave/internal/auth-service/config"
+	"brain-wave/internal/auth-service/handlers"
+	"brain-wave/internal/auth-service/repository"
+	srv "brain-wave/internal/auth-service/service"
+	"brain-wave/internal/shared/consul"
+	"b
 	"context"
 	"errors"
 	"fmt"
@@ -12,18 +18,9 @@ import (
 	"google.golang.org/grpc/reflection"
 	"net"
 	"net/http"
-	"story-pulse/internal/auth-service/config"
-	"story-pulse/internal/auth-service/handlers"
-	"story-pulse/internal/auth-service/repository"
-	srv "story-pulse/internal/auth-service/service"
-	"story-pulse/internal/shared/consul"
-	"story-pulse/internal/shared/grpc/client"
-	v1 "story-pulse/internal/shared/grpc/v1"
-	net2 "story-pulse/internal/shared/net"
-	"story-pulse/internal/shared/resolver"
-)
-
-type Server struct {
+	"brain-wave/internal/auth-service/config"
+	"brain-wave/internal/auth-service/handlers"
+	"brain-wave/internal/auth-service/repository"
 	grpcServer *grpc.Server
 	httpServer *http.Server
 	listener   net.Listener

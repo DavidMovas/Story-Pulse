@@ -1,11 +1,11 @@
 package client
 
 import (
+	"brain-wave/contracts"
 	"encoding/json"
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"net/http"
-	"story-pulse/contracts"
 )
 
 type Client struct {

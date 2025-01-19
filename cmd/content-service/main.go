@@ -1,15 +1,13 @@
 package main
 
 import (
+	srvConfig "brain-wave/inter
 	"context"
 	"log/slog"
 	"os"
 	"os/signal"
-	srvConfig "story-pulse/internal/content-service/config"
-	"story-pulse/internal/content-service/server"
-	"story-pulse/internal/shared/config"
-	"syscall"
-	"time"
+	srvConfig "brain-wave/internal/content-service/config"
+	"brain-wave/internal/content-service/server"
 )
 
 func main() {

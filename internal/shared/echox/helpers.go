@@ -1,9 +1,9 @@
 package echox
 
 import (
+	apperrors "brain-wave/internal/shared/error"
 	"github.com/labstack/echo/v4"
 	"gopkg.in/validator.v2"
-	apperrors "story-pulse/internal/shared/error"
 )
 
 func BindAndValidate[T any](c echo.Context) (*T, error) {

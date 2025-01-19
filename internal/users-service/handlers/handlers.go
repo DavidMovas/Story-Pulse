@@ -1,13 +1,16 @@
 package handlers
 
 import (
+	grpc "brain-wave/internal/shared/grpc/v1"
+	auth "brain-wave/internal/shared/interceptors/auth"
+	. "brain-wave/internal/users-service/models"
+	. "brain-wave/internal/users-service/service"
 	"context"
 	"go.uber.org/zap"
 	"net/http"
-	grpc "story-pulse/internal/shared/grpc/v1"
-	auth "story-pulse/internal/shared/interceptors/auth"
-	. "story-pulse/internal/users-service/models"
-	. "story-pulse/internal/users-service/service"
+)
+
+var _
 )
 
 var _ grpc.UsersServiceServer = (*Handler)(nil)

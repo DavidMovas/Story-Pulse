@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"go.uber.org/zap"
-	v1 "story-pulse/internal/shared/grpc/v1"
+	v1 "brain-wave/internal/shared/grpc/v1"
+	
 )
 
 type Interceptor struct {
